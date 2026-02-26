@@ -1,0 +1,337 @@
+import type { Album, ArtistDetails, Review } from '../types'
+
+// ─── Artists ─────────────────────────────────────────────────────────────────
+const artistRadiohead = { id: 1, name: 'Radiohead', imageUrl: 'https://picsum.photos/seed/radiohead/200/200' }
+const artistKendrick = { id: 2, name: 'Kendrick Lamar', imageUrl: 'https://picsum.photos/seed/kendrick/200/200' }
+const artistBjork = { id: 3, name: 'Björk', imageUrl: 'https://picsum.photos/seed/bjork/200/200' }
+const artistFrank = { id: 4, name: 'Frank Ocean', imageUrl: 'https://picsum.photos/seed/frankocean/200/200' }
+const artistAmyWinehouse = { id: 5, name: 'Amy Winehouse', imageUrl: 'https://picsum.photos/seed/amywinehouse/200/200' }
+const artistSZA = { id: 6, name: 'SZA', imageUrl: 'https://picsum.photos/seed/sza/200/200' }
+
+// ─── Albums ──────────────────────────────────────────────────────────────────
+export const mockAlbums: Album[] = [
+    {
+        id: 1,
+        title: 'OK Computer',
+        artist: artistRadiohead,
+        coverUrl: 'https://picsum.photos/seed/okcomputer/400/400',
+        releaseYear: 1997,
+        genre: 'Alternative Rock',
+        label: 'Parlophone',
+        averageRating: 94,
+        totalReviews: 1284,
+        musics: [
+            { id: 101, title: 'Airbag', durationMs: 277000, trackNumber: 1, averageRating: 89 },
+            { id: 102, title: 'Paranoid Android', durationMs: 383000, trackNumber: 2, averageRating: 98 },
+            { id: 103, title: 'Subterranean Homesick Alien', durationMs: 274000, trackNumber: 3, averageRating: 85 },
+            { id: 104, title: 'Exit Music (For a Film)', durationMs: 265000, trackNumber: 4, averageRating: 92 },
+            { id: 105, title: 'Let Down', durationMs: 299000, trackNumber: 5, averageRating: 91 },
+            { id: 106, title: 'Karma Police', durationMs: 263000, trackNumber: 6, averageRating: 95 },
+            { id: 107, title: 'Fitter Happier', durationMs: 116000, trackNumber: 7, averageRating: 72 },
+            { id: 108, title: 'Electioneering', durationMs: 231000, trackNumber: 8, averageRating: 78 },
+            { id: 109, title: 'Climbing Up the Walls', durationMs: 277000, trackNumber: 9, averageRating: 87 },
+            { id: 110, title: 'No Surprises', durationMs: 228000, trackNumber: 10, averageRating: 93 },
+            { id: 111, title: 'Lucky', durationMs: 258000, trackNumber: 11, averageRating: 88 },
+            { id: 112, title: 'The Tourist', durationMs: 319000, trackNumber: 12, averageRating: 86 },
+        ],
+    },
+    {
+        id: 2,
+        title: 'To Pimp a Butterfly',
+        artist: artistKendrick,
+        coverUrl: 'https://picsum.photos/seed/tpab/400/400',
+        releaseYear: 2015,
+        genre: 'Hip-Hop',
+        label: 'Top Dawg Entertainment',
+        averageRating: 96,
+        totalReviews: 2105,
+        musics: [
+            { id: 201, title: 'Wesley\'s Theory', durationMs: 295000, trackNumber: 1, averageRating: 90 },
+            { id: 202, title: 'For Free? (Interlude)', durationMs: 137000, trackNumber: 2, averageRating: 84 },
+            { id: 203, title: 'King Kunta', durationMs: 234000, trackNumber: 3, averageRating: 93 },
+            { id: 204, title: 'Institutionalized', durationMs: 278000, trackNumber: 4, averageRating: 88 },
+            { id: 205, title: 'These Walls', durationMs: 299000, trackNumber: 5, averageRating: 89 },
+            { id: 206, title: 'u', durationMs: 330000, trackNumber: 6, averageRating: 91 },
+            { id: 207, title: 'Alright', durationMs: 219000, trackNumber: 7, averageRating: 97 },
+            { id: 208, title: 'For Sale? (Interlude)', durationMs: 149000, trackNumber: 8, averageRating: 85 },
+            { id: 209, title: 'Momma', durationMs: 295000, trackNumber: 9, averageRating: 87 },
+            { id: 210, title: 'Hood Politics', durationMs: 272000, trackNumber: 10, averageRating: 89 },
+            { id: 211, title: 'How Much a Dollar Cost', durationMs: 253000, trackNumber: 11, averageRating: 95 },
+            { id: 212, title: 'Complexion (A Zulu Love)', durationMs: 270000, trackNumber: 12, averageRating: 90 },
+            { id: 213, title: 'The Blacker the Berry', durationMs: 330000, trackNumber: 13, averageRating: 94 },
+            { id: 214, title: 'You Ain\'t Gotta Lie (Momma Said)', durationMs: 218000, trackNumber: 14, averageRating: 86 },
+            { id: 215, title: 'i', durationMs: 338000, trackNumber: 15, averageRating: 88 },
+            { id: 216, title: 'Mortal Man', durationMs: 720000, trackNumber: 16, averageRating: 92 },
+        ],
+    },
+    {
+        id: 3,
+        title: 'Homogenic',
+        artist: artistBjork,
+        coverUrl: 'https://picsum.photos/seed/homogenic/400/400',
+        releaseYear: 1997,
+        genre: 'Electronic / Art Pop',
+        label: 'One Little Indian',
+        averageRating: 91,
+        totalReviews: 743,
+        musics: [
+            { id: 301, title: 'Hunter', durationMs: 244000, trackNumber: 1, averageRating: 90 },
+            { id: 302, title: 'Jóga', durationMs: 305000, trackNumber: 2, averageRating: 94 },
+            { id: 303, title: 'Unravel', durationMs: 261000, trackNumber: 3, averageRating: 88 },
+            { id: 304, title: 'Bachelorette', durationMs: 355000, trackNumber: 4, averageRating: 95 },
+            { id: 305, title: 'All Neon Like', durationMs: 296000, trackNumber: 5, averageRating: 86 },
+            { id: 306, title: 'Five Years', durationMs: 294000, trackNumber: 6, averageRating: 87 },
+            { id: 307, title: 'Immature', durationMs: 268000, trackNumber: 7, averageRating: 85 },
+            { id: 308, title: 'Alarm Call', durationMs: 237000, trackNumber: 8, averageRating: 89 },
+            { id: 309, title: 'Pluto', durationMs: 219000, trackNumber: 9, averageRating: 84 },
+            { id: 310, title: 'All Is Full of Love', durationMs: 266000, trackNumber: 10, averageRating: 96 },
+        ],
+    },
+    {
+        id: 4,
+        title: 'Blonde',
+        artist: artistFrank,
+        coverUrl: 'https://picsum.photos/seed/blonde/400/400',
+        releaseYear: 2016,
+        genre: 'R&B / Neo Soul',
+        label: 'Boys Don\'t Cry',
+        averageRating: 93,
+        totalReviews: 1876,
+        musics: [
+            { id: 401, title: 'Nikes', durationMs: 311000, trackNumber: 1, averageRating: 90 },
+            { id: 402, title: 'Ivy', durationMs: 251000, trackNumber: 2, averageRating: 94 },
+            { id: 403, title: 'Pink + White', durationMs: 213000, trackNumber: 3, averageRating: 95 },
+            { id: 404, title: 'Be Yourself', durationMs: 96000, trackNumber: 4, averageRating: 78 },
+            { id: 405, title: 'Solo', durationMs: 258000, trackNumber: 5, averageRating: 91 },
+            { id: 406, title: 'Skyline To', durationMs: 219000, trackNumber: 6, averageRating: 89 },
+            { id: 407, title: 'Self Control', durationMs: 249000, trackNumber: 7, averageRating: 96 },
+            { id: 408, title: 'Good Guy', durationMs: 64000, trackNumber: 8, averageRating: 82 },
+            { id: 409, title: 'Nights', durationMs: 307000, trackNumber: 9, averageRating: 97 },
+            { id: 410, title: 'Solo (Reprise)', durationMs: 102000, trackNumber: 10, averageRating: 85 },
+            { id: 411, title: 'Pretty Sweet', durationMs: 166000, trackNumber: 11, averageRating: 87 },
+            { id: 412, title: 'Facebook Story', durationMs: 89000, trackNumber: 12, averageRating: 75 },
+            { id: 413, title: 'Close to You', durationMs: 60000, trackNumber: 13, averageRating: 80 },
+            { id: 414, title: 'White Ferrari', durationMs: 236000, trackNumber: 14, averageRating: 95 },
+            { id: 415, title: 'Seigfried', durationMs: 350000, trackNumber: 15, averageRating: 92 },
+            { id: 416, title: 'Godspeed', durationMs: 166000, trackNumber: 16, averageRating: 93 },
+            { id: 417, title: 'Futura Free', durationMs: 549000, trackNumber: 17, averageRating: 88 },
+        ],
+    },
+    {
+        id: 5,
+        title: 'Back to Black',
+        artist: artistAmyWinehouse,
+        coverUrl: 'https://picsum.photos/seed/backtoblack/400/400',
+        releaseYear: 2006,
+        genre: 'Soul / R&B',
+        label: 'Island Records',
+        averageRating: 89,
+        totalReviews: 934,
+        musics: [
+            { id: 501, title: 'Rehab', durationMs: 213000, trackNumber: 1, averageRating: 92 },
+            { id: 502, title: 'You Know I\'m No Good', durationMs: 237000, trackNumber: 2, averageRating: 88 },
+            { id: 503, title: 'Me & Mr Jones', durationMs: 152000, trackNumber: 3, averageRating: 85 },
+            { id: 504, title: 'Just Friends', durationMs: 173000, trackNumber: 4, averageRating: 83 },
+            { id: 505, title: 'Back to Black', durationMs: 241000, trackNumber: 5, averageRating: 95 },
+            { id: 506, title: 'Love Is a Losing Game', durationMs: 148000, trackNumber: 6, averageRating: 94 },
+            { id: 507, title: 'Tears Dry on Their Own', durationMs: 185000, trackNumber: 7, averageRating: 90 },
+            { id: 508, title: 'Wake Up Alone', durationMs: 233000, trackNumber: 8, averageRating: 89 },
+            { id: 509, title: 'Some Unholy War', durationMs: 148000, trackNumber: 9, averageRating: 86 },
+            { id: 510, title: 'He Can Only Hold Her', durationMs: 175000, trackNumber: 10, averageRating: 84 },
+            { id: 511, title: 'Addicted', durationMs: 157000, trackNumber: 11, averageRating: 82 },
+        ],
+    },
+    {
+        id: 6,
+        title: 'SOS',
+        artist: artistSZA,
+        coverUrl: 'https://picsum.photos/seed/szasos/400/400',
+        releaseYear: 2022,
+        genre: 'R&B / Pop',
+        label: 'Top Dawg Entertainment',
+        averageRating: 87,
+        totalReviews: 1543,
+        musics: [
+            { id: 601, title: 'SOS', durationMs: 119000, trackNumber: 1, averageRating: 85 },
+            { id: 602, title: 'Seek & Destroy', durationMs: 222000, trackNumber: 2, averageRating: 87 },
+            { id: 603, title: 'Low', durationMs: 185000, trackNumber: 3, averageRating: 90 },
+            { id: 604, title: 'Love Language', durationMs: 193000, trackNumber: 4, averageRating: 88 },
+            { id: 605, title: 'Blind', durationMs: 197000, trackNumber: 5, averageRating: 91 },
+            { id: 606, title: 'Used', durationMs: 218000, trackNumber: 6, averageRating: 86 },
+            { id: 607, title: 'Snooze', durationMs: 220000, trackNumber: 7, averageRating: 93 },
+            { id: 608, title: 'Gone Girl', durationMs: 183000, trackNumber: 8, averageRating: 84 },
+            { id: 609, title: 'Shirt', durationMs: 218000, trackNumber: 9, averageRating: 89 },
+            { id: 610, title: 'Kill Bill', durationMs: 153000, trackNumber: 10, averageRating: 94 },
+        ],
+    },
+]
+
+// ─── Artists (detailed) ───────────────────────────────────────────────────────
+export const mockArtists: ArtistDetails[] = [
+    {
+        id: 1,
+        name: 'Radiohead',
+        country: 'Reino Unido',
+        bornDate: '1985-07-01',
+        imageUrl: 'https://picsum.photos/seed/radiohead/400/400',
+        albums: [
+            { id: 1, title: 'OK Computer', coverUrl: 'https://picsum.photos/seed/okcomputer/400/400', releaseYear: 1997, genre: 'Alternative Rock', averageRating: 94, totalReviews: 1284 },
+        ],
+    },
+    {
+        id: 2,
+        name: 'Kendrick Lamar',
+        country: 'Estados Unidos',
+        bornDate: '1987-06-17',
+        imageUrl: 'https://picsum.photos/seed/kendrick/400/400',
+        albums: [
+            { id: 2, title: 'To Pimp a Butterfly', coverUrl: 'https://picsum.photos/seed/tpab/400/400', releaseYear: 2015, genre: 'Hip-Hop', averageRating: 96, totalReviews: 2105 },
+        ],
+    },
+    {
+        id: 3,
+        name: 'Björk',
+        country: 'Islândia',
+        bornDate: '1965-11-21',
+        imageUrl: 'https://picsum.photos/seed/bjork/400/400',
+        albums: [
+            { id: 3, title: 'Homogenic', coverUrl: 'https://picsum.photos/seed/homogenic/400/400', releaseYear: 1997, genre: 'Electronic / Art Pop', averageRating: 91, totalReviews: 743 },
+        ],
+    },
+    {
+        id: 4,
+        name: 'Frank Ocean',
+        country: 'Estados Unidos',
+        bornDate: '1987-10-28',
+        imageUrl: 'https://picsum.photos/seed/frankocean/400/400',
+        albums: [
+            { id: 4, title: 'Blonde', coverUrl: 'https://picsum.photos/seed/blonde/400/400', releaseYear: 2016, genre: 'R&B / Neo Soul', averageRating: 93, totalReviews: 1876 },
+        ],
+    },
+    {
+        id: 5,
+        name: 'Amy Winehouse',
+        country: 'Reino Unido',
+        bornDate: '1983-09-14',
+        deathDate: '2011-07-23',
+        imageUrl: 'https://picsum.photos/seed/amywinehouse/400/400',
+        albums: [
+            { id: 5, title: 'Back to Black', coverUrl: 'https://picsum.photos/seed/backtoblack/400/400', releaseYear: 2006, genre: 'Soul / R&B', averageRating: 89, totalReviews: 934 },
+        ],
+    },
+    {
+        id: 6,
+        name: 'SZA',
+        country: 'Estados Unidos',
+        bornDate: '1989-11-08',
+        imageUrl: 'https://picsum.photos/seed/sza/400/400',
+        albums: [
+            { id: 6, title: 'SOS', coverUrl: 'https://picsum.photos/seed/szasos/400/400', releaseYear: 2022, genre: 'R&B / Pop', averageRating: 87, totalReviews: 1543 },
+        ],
+    },
+]
+
+// ─── Reviews ─────────────────────────────────────────────────────────────────
+export const mockReviews: Review[] = [
+    {
+        id: 1,
+        user: { id: 10, username: 'musiclover42', avatarUrl: 'https://picsum.photos/seed/user10/40/40' },
+        album: { id: 1, title: 'OK Computer', coverUrl: 'https://picsum.photos/seed/okcomputer/400/400' },
+        mode: 'comment',
+        comment: 'Uma obra-prima atemporal. Radiohead conseguiu capturar a ansiedade da era digital de uma forma que ainda ressoa hoje. Cada faixa é uma jornada sonora única.',
+        createdAt: '2024-11-15T14:30:00Z',
+        likesCount: 87,
+    },
+    {
+        id: 2,
+        user: { id: 11, username: 'vinylhead', avatarUrl: 'https://picsum.photos/seed/user11/40/40' },
+        album: { id: 1, title: 'OK Computer', coverUrl: 'https://picsum.photos/seed/okcomputer/400/400' },
+        mode: 'rating',
+        comment: 'Paranoid Android sozinha já justifica a existência desse álbum. Produção impecável do Nigel Godrich.',
+        rating: 95,
+        createdAt: '2024-10-22T09:15:00Z',
+        likesCount: 134,
+    },
+    {
+        id: 3,
+        user: { id: 12, username: 'critico_musical', avatarUrl: 'https://picsum.photos/seed/user12/40/40' },
+        album: { id: 1, title: 'OK Computer', coverUrl: 'https://picsum.photos/seed/okcomputer/400/400' },
+        mode: 'music-by-music',
+        comment: 'Análise faixa a faixa do meu álbum favorito de todos os tempos.',
+        rating: 94,
+        musicRatings: [
+            { musicId: 101, musicTitle: 'Airbag', rating: 90 },
+            { musicId: 102, musicTitle: 'Paranoid Android', rating: 100 },
+            { musicId: 103, musicTitle: 'Subterranean Homesick Alien', rating: 85 },
+            { musicId: 104, musicTitle: 'Exit Music (For a Film)', rating: 95 },
+            { musicId: 105, musicTitle: 'Let Down', rating: 90 },
+            { musicId: 106, musicTitle: 'Karma Police', rating: 95 },
+            { musicId: 107, musicTitle: 'Fitter Happier', rating: 70 },
+            { musicId: 108, musicTitle: 'Electioneering', rating: 80 },
+            { musicId: 109, musicTitle: 'Climbing Up the Walls', rating: 85 },
+            { musicId: 110, musicTitle: 'No Surprises', rating: 95 },
+            { musicId: 111, musicTitle: 'Lucky', rating: 90 },
+            { musicId: 112, musicTitle: 'The Tourist', rating: 85 },
+        ],
+        createdAt: '2024-09-08T18:45:00Z',
+        likesCount: 256,
+    },
+]
+
+// ─── Current user (logged-in) ─────────────────────────────────────────────────
+import type { MusicShare, UserProfile } from '../types'
+
+export const mockCurrentUser: UserProfile = {
+    id: 99,
+    username: 'pedro',
+    avatarUrl: 'https://picsum.photos/seed/pedro/200/200',
+    bio: 'Ouvindo música desde antes de nascer. Fã de rock alternativo, jazz e tudo que faz pensar.',
+    followersCount: 312,
+    followingCount: 87,
+    reviewsCount: 3,
+    sharesCount: 4,
+    joinedAt: '2023-03-10T00:00:00Z',
+}
+
+// Reviews do usuário atual
+export const mockUserReviews = mockReviews.map(r => ({ ...r, user: mockCurrentUser }))
+
+// ─── MusicShares ──────────────────────────────────────────────────────────────
+export const mockMusicShares: MusicShare[] = [
+    {
+        id: 1,
+        user: mockCurrentUser,
+        targetType: 'album',
+        album: { id: 1, title: 'OK Computer', coverUrl: 'https://picsum.photos/seed/okcomputer/400/400', artistName: 'Radiohead' },
+        comment: 'Um dos álbuns mais importantes da história do rock. Ouça agora!',
+        createdAt: '2025-01-20T10:00:00Z',
+        likesCount: 42,
+    },
+    {
+        id: 2,
+        user: mockCurrentUser,
+        targetType: 'track',
+        album: { id: 2, title: 'To Pimp a Butterfly', coverUrl: 'https://picsum.photos/seed/tpab/400/400', artistName: 'Kendrick Lamar' },
+        track: { id: 201, title: "Wesley's Theory", trackNumber: 1 },
+        comment: 'Essa intro é perfeita. George Clinton + Thundercat = obra de arte.',
+        createdAt: '2025-01-15T18:30:00Z',
+        likesCount: 28,
+    },
+    {
+        id: 3,
+        user: mockCurrentUser,
+        targetType: 'artist',
+        artist: { id: 3, name: 'Björk', imageUrl: 'https://picsum.photos/seed/bjork/200/200' },
+        comment: 'Ninguém faz música como ela. Homogenic mudou minha vida.',
+        createdAt: '2025-01-10T09:00:00Z',
+        likesCount: 61,
+    },
+    {
+        id: 4,
+        user: mockCurrentUser,
+        targetType: 'album',
+        album: { id: 4, title: 'Blonde', coverUrl: 'https://picsum.photos/seed/blonde/400/400', artistName: 'Frank Ocean' },
+        createdAt: '2024-12-28T22:00:00Z',
+        likesCount: 19,
+    },
+]
