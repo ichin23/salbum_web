@@ -1,22 +1,48 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Search, X, Disc3, Music2, User, Music, Plus } from "lucide-vue-next";
+import { Search, X, Disc3, Music2, User, Music, Plus, UserCheck, UserPlus, Loader2 } from "lucide-vue-next";
 import { fetchSearch } from "../services/fetchService";
+import { searchUsers, followUser, unfollowUser } from "../services/userService";
+import { useAuthStore } from "../stores/auth";
 import type { FetchAlbum, FetchArtist, FetchMusicResult } from "../types";
+import type { UserDTO } from "../services/userService";
 import AppImage from "../components/AppImage.vue";
 
 const route = useRoute();
 const router = useRouter();
+const auth = useAuthStore();
 
 const query = ref((route.query.q as string) ?? "");
-const searchType = ref<"album" | "artist" | "music">("album");
+const searchType = ref<"album" | "artist" | "music" | "user">("album");
 const albumResults = ref<FetchAlbum[]>([]);
 const artistResults = ref<FetchArtist[]>([]);
 const musicResults = ref<FetchMusicResult[]>([]);
+const userResults = ref<UserDTO[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const searched = ref(false);
+
+// follow state: map userId -> 'loading' | true | false
+const followState = ref<Record<string, boolean | "loading">>({})
+
+async function toggleFollow(user: UserDTO) {
+  followState.value[user.id] = 'loading';
+  try {
+    if (user.is_following) {
+      await unfollowUser(user.id);
+      user.is_following = false;
+      user.followers_count = Math.max(0, user.followers_count - 1);
+    } else {
+      await followUser(user.id);
+      user.is_following = true;
+      user.followers_count += 1;
+    }
+    followState.value[user.id] = user.is_following;
+  } catch {
+    followState.value[user.id] = user.is_following;
+  }
+}
 
 let debounceTimer: ReturnType<typeof setTimeout>;
 
@@ -39,6 +65,7 @@ function formatDuration(ms: number | null): string {
 const totalResults = computed(() => {
   if (searchType.value === "artist") return artistResults.value.length;
   if (searchType.value === "music") return musicResults.value.length;
+  if (searchType.value === "user") return userResults.value.length;
   return albumResults.value.length;
 });
 
@@ -47,6 +74,7 @@ async function doSearch(q: string) {
     albumResults.value = [];
     artistResults.value = [];
     musicResults.value = [];
+    userResults.value = [];
     searched.value = false;
     return;
   }
@@ -54,16 +82,20 @@ async function doSearch(q: string) {
   error.value = null;
   searched.value = true;
   try {
-    const data = await fetchSearch({ q: q.trim(), type: searchType.value });
-    albumResults.value = [];
-    artistResults.value = [];
-    musicResults.value = [];
-    if (data.type === "artist") {
-      artistResults.value = data.data as FetchArtist[];
-    } else if (data.type === "music") {
-      musicResults.value = data.data as FetchMusicResult[];
+    if (searchType.value === "user") {
+      userResults.value = await searchUsers(q.trim());
     } else {
-      albumResults.value = data.data as FetchAlbum[];
+      const data = await fetchSearch({ q: q.trim(), type: searchType.value });
+      albumResults.value = [];
+      artistResults.value = [];
+      musicResults.value = [];
+      if (data.type === "artist") {
+        artistResults.value = data.data as FetchArtist[];
+      } else if (data.type === "music") {
+        musicResults.value = data.data as FetchMusicResult[];
+      } else {
+        albumResults.value = data.data as FetchAlbum[];
+      }
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : "Erro ao buscar";
@@ -80,7 +112,7 @@ function onInput() {
   }, 400);
 }
 
-function selectType(type: "album" | "artist" | "music") {
+function selectType(type: "album" | "artist" | "music" | "user") {
   if (searchType.value === type) return;
   searchType.value = type;
   if (query.value.trim()) doSearch(query.value);
@@ -91,6 +123,7 @@ function clearSearch() {
   albumResults.value = [];
   artistResults.value = [];
   musicResults.value = [];
+  userResults.value = [];
   searched.value = false;
   error.value = null;
   router.replace({ query: {} });
@@ -155,15 +188,16 @@ watch(
     </div>
 
     <!-- Type chips -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
       <button
         v-for="chip in [
           { value: 'album', label: 'Álbuns', icon: Music },
           { value: 'artist', label: 'Artistas', icon: User },
           { value: 'music', label: 'Músicas', icon: Music2 },
+          { value: 'user', label: 'Usuários', icon: UserCheck },
         ]"
         :key="chip.value"
-        @click="selectType(chip.value as 'album' | 'artist' | 'music')"
+        @click="selectType(chip.value as 'album' | 'artist' | 'music' | 'user')"
         class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200"
         :class="
           searchType === chip.value
@@ -205,6 +239,56 @@ watch(
           <div class="h-2.5 bg-[var(--color-surface-2)] rounded-full w-1/2" />
         </div>
         <div class="h-2.5 bg-[var(--color-surface-2)] rounded-full w-8" />
+      </div>
+    </div>
+
+    <!-- Resultados: USUÁRIOS -->
+    <div v-else-if="searchType === 'user' && userResults.length > 0" class="space-y-2">
+      <p class="text-muted text-sm mb-4">
+        {{ userResults.length }} usuário{{ userResults.length !== 1 ? 's' : '' }} para "<span class="text-white">{{ query }}</span>"
+      </p>
+      <div
+        v-for="user in userResults"
+        :key="user.id"
+        class="flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] transition-colors group cursor-pointer"
+        @click="router.push({ name: 'user-profile', params: { id: user.id } })"
+      >
+        <!-- Avatar -->
+        <div class="w-11 h-11 shrink-0">
+          <AppImage
+            :src="user.image_url"
+            :alt="user.name"
+            :initial="(user.username?.[0] ?? '?').toUpperCase()"
+            type="artist"
+            rounded="full"
+            class="w-11 h-11"
+          />
+        </div>
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white truncate group-hover:text-primary transition-colors">{{ user.name }}</p>
+          <p class="text-xs text-muted truncate">@{{ user.username }}</p>
+          <p class="text-xs text-muted/60 mt-0.5">
+            {{ user.followers_count }} seguidores
+          </p>
+        </div>
+        <!-- Follow button (não mostra para o próprio usuário) -->
+        <button
+          v-if="user.id !== auth.user?.id"
+          @click.stop="toggleFollow(user)"
+          :disabled="followState[user.id] === 'loading'"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-200 shrink-0"
+          :class="
+            user.is_following
+              ? 'border-[var(--color-border)] text-muted hover:border-red-500/50 hover:text-red-400'
+              : 'border-primary text-primary hover:bg-primary hover:text-white'
+          "
+        >
+          <Loader2 v-if="followState[user.id] === 'loading'" class="w-3.5 h-3.5 animate-spin" />
+          <UserCheck v-else-if="user.is_following" class="w-3.5 h-3.5" />
+          <UserPlus v-else class="w-3.5 h-3.5" />
+          {{ followState[user.id] === 'loading' ? '' : user.is_following ? 'Seguindo' : 'Seguir' }}
+        </button>
       </div>
     </div>
 
