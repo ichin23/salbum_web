@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowLeft, Loader2, Check, AlertCircle, CheckCircle2 } from "lucide-vue-next";
+import {
+  ArrowLeft,
+  Loader2,
+  Check,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-vue-next";
 import {
   updateArtist,
   getArtistUploadImageUrl,
@@ -35,7 +41,8 @@ onMounted(async () => {
   try {
     const data = await fetchArtistDetails(artistId);
     const artist: FetchArtistDetails =
-      (data as unknown as { artist: FetchArtistDetails }).artist ?? (data as unknown as FetchArtistDetails);
+      (data as unknown as { artist: FetchArtistDetails }).artist ??
+      (data as unknown as FetchArtistDetails);
     name.value = artist.name ?? "";
     country.value = artist.country ?? "";
     born_date.value = artist.born_date ?? "";
@@ -135,7 +142,9 @@ async function submit() {
 
         <!-- Name -->
         <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-muted uppercase tracking-wider">
+          <label
+            class="text-xs font-semibold text-muted uppercase tracking-wider"
+          >
             Nome <span class="text-red-400">*</span>
           </label>
           <input
@@ -149,7 +158,10 @@ async function submit() {
 
         <!-- Country -->
         <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-muted uppercase tracking-wider">País</label>
+          <label
+            class="text-xs font-semibold text-muted uppercase tracking-wider"
+            >País</label
+          >
           <select
             v-model="country"
             class="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary transition-colors"
@@ -184,7 +196,10 @@ async function submit() {
 
         <!-- Born date -->
         <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-muted uppercase tracking-wider">Data de nascimento</label>
+          <label
+            class="text-xs font-semibold text-muted uppercase tracking-wider"
+            >Data de nascimento</label
+          >
           <input
             v-model="born_date"
             type="date"
@@ -194,7 +209,10 @@ async function submit() {
 
         <!-- Death date -->
         <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-muted uppercase tracking-wider">Data de falecimento</label>
+          <label
+            class="text-xs font-semibold text-muted uppercase tracking-wider"
+            >Data de falecimento</label
+          >
           <input
             v-model="death_date"
             type="date"

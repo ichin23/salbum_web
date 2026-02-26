@@ -63,7 +63,7 @@ const areaPath = computed(() => {
   if (chartPoints.value.length < 2) return "";
   const zeroY = PAD_Y + ((2 - 0) / 4) * (H - PAD_Y * 2);
   const first = chartPoints.value[0]!;
-  const last = chartPoints.value[chartPoints.value.length - 1]!
+  const last = chartPoints.value[chartPoints.value.length - 1]!;
   return `${linePath.value} L ${last.x} ${zeroY} L ${first.x} ${zeroY} Z`;
 });
 
@@ -78,7 +78,7 @@ function colorFor(intensity: number): string {
 // Hover state
 const hovered = ref<number | null>(null);
 const hoveredPoint = computed(() =>
-  hovered.value !== null ? chartPoints.value[hovered.value] ?? null : null,
+  hovered.value !== null ? (chartPoints.value[hovered.value] ?? null) : null,
 );
 </script>
 
@@ -190,7 +190,10 @@ const hoveredPoint = computed(() =>
           </g>
 
           <!-- Tooltip -->
-          <g v-if="hovered !== null && hoveredPoint" style="pointer-events: none">
+          <g
+            v-if="hovered !== null && hoveredPoint"
+            style="pointer-events: none"
+          >
             <rect
               :x="Math.min(Math.max(hoveredPoint.x - 56, 0), W - 112)"
               :y="hoveredPoint.y - 42"

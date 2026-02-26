@@ -11,7 +11,12 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-vue-next";
-import { updateAlbum, type CreateMusicDTO, getAlbumUploadImageUrl, uploadImageToPresignedUrl } from "../services/albumService";
+import {
+  updateAlbum,
+  type CreateMusicDTO,
+  getAlbumUploadImageUrl,
+  uploadImageToPresignedUrl,
+} from "../services/albumService";
 import { searchArtists } from "../services/artistService";
 import { fetchReleaseDetails, fetchAlbumImage } from "../services/fetchService";
 import type { ArtistInfoDTO } from "../types";
@@ -220,9 +225,13 @@ onMounted(async () => {
     if (!a.image_url) {
       fetchingSuggestion.value = true;
       fetchAlbumImage(albumId)
-        .then((res) => { suggestedImageUrl.value = res.imageUrl; })
+        .then((res) => {
+          suggestedImageUrl.value = res.imageUrl;
+        })
         .catch(() => {})
-        .finally(() => { fetchingSuggestion.value = false; });
+        .finally(() => {
+          fetchingSuggestion.value = false;
+        });
     }
     selectedArtists.value = a.artists.map((x) => ({
       id: x.id,
@@ -273,10 +282,10 @@ function validate(): string | null {
 }
 
 async function handleAlbumImageUpload(file: File): Promise<string> {
-  const { url, path } = await getAlbumUploadImageUrl(albumId)
-  await uploadImageToPresignedUrl(url, file)
-  image_url.value = path
-  return path
+  const { url, path } = await getAlbumUploadImageUrl(albumId);
+  await uploadImageToPresignedUrl(url, file);
+  image_url.value = path;
+  return path;
 }
 
 async function submit() {
@@ -455,7 +464,9 @@ async function submit() {
           v-else-if="suggestedImageUrl && !image_url"
           class="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2.5"
         >
-          <p class="text-xs font-semibold text-primary">Sugestão de capa encontrada</p>
+          <p class="text-xs font-semibold text-primary">
+            Sugestão de capa encontrada
+          </p>
           <div class="flex items-center gap-3">
             <img
               :src="suggestedImageUrl"
@@ -463,7 +474,9 @@ async function submit() {
               alt="Capa sugerida"
             />
             <div class="flex flex-col gap-1.5">
-              <p class="text-xs text-muted">Imagem encontrada no MusicBrainz. Deseja usar como capa?</p>
+              <p class="text-xs text-muted">
+                Imagem encontrada no MusicBrainz. Deseja usar como capa?
+              </p>
               <div class="flex gap-2">
                 <button
                   type="button"

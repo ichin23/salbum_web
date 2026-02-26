@@ -1,87 +1,100 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Upload, Loader2, CheckCircle2, AlertCircle, Camera } from 'lucide-vue-next'
+import { ref } from "vue";
+import {
+  Upload,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Camera,
+} from "lucide-vue-next";
 
 const props = defineProps<{
   /** Função que recebe o File e faz o upload, retorna a URL/path final da imagem */
-  onUpload: (file: File) => Promise<string>
+  onUpload: (file: File) => Promise<string>;
   /** URL atual da imagem, para preview */
-  currentImageUrl?: string | null
+  currentImageUrl?: string | null;
   /** Texto do label */
-  label?: string
+  label?: string;
   /** Tamanho do preview: 'sm' | 'md' | 'lg' */
-  size?: 'sm' | 'md' | 'lg'
+  size?: "sm" | "md" | "lg";
   /** Shape do preview: 'circle' | 'rounded' */
-  shape?: 'circle' | 'rounded'
-}>()
+  shape?: "circle" | "rounded";
+}>();
 
 const emit = defineEmits<{
-  (e: 'uploaded', url: string): void
-}>()
+  (e: "uploaded", url: string): void;
+}>();
 
-const fileInput = ref<HTMLInputElement | null>(null)
-const uploading = ref(false)
-const uploadError = ref<string | null>(null)
-const uploadDone = ref(false)
-const previewUrl = ref<string | null>(props.currentImageUrl ?? null)
+const fileInput = ref<HTMLInputElement | null>(null);
+const uploading = ref(false);
+const uploadError = ref<string | null>(null);
+const uploadDone = ref(false);
+const previewUrl = ref<string | null>(props.currentImageUrl ?? null);
 
 const sizeClass = {
-  sm: 'w-14 h-14',
-  md: 'w-20 h-20',
-  lg: 'w-28 h-28',
-}[props.size ?? 'md']
+  sm: "w-14 h-14",
+  md: "w-20 h-20",
+  lg: "w-28 h-28",
+}[props.size ?? "md"];
 
-const shapeClass = (props.shape ?? 'rounded') === 'circle' ? 'rounded-full' : 'rounded-2xl'
+const shapeClass =
+  (props.shape ?? "rounded") === "circle" ? "rounded-full" : "rounded-2xl";
 
 function openPicker() {
-  fileInput.value?.click()
+  fileInput.value?.click();
 }
 
 async function onFileChange(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
 
   // Validate type
-  if (!file.type.startsWith('image/')) {
-    uploadError.value = 'Selecione um arquivo de imagem válido.'
-    return
+  if (!file.type.startsWith("image/")) {
+    uploadError.value = "Selecione um arquivo de imagem válido.";
+    return;
   }
   // Validate size (max 5MB)
   if (file.size > 5 * 1024 * 1024) {
-    uploadError.value = 'Imagem muito grande. Máximo 5 MB.'
-    return
+    uploadError.value = "Imagem muito grande. Máximo 5 MB.";
+    return;
   }
 
   // Local preview
-  const reader = new FileReader()
+  const reader = new FileReader();
   reader.onload = (ev) => {
-    previewUrl.value = ev.target?.result as string
-  }
-  reader.readAsDataURL(file)
+    previewUrl.value = ev.target?.result as string;
+  };
+  reader.readAsDataURL(file);
 
-  uploading.value = true
-  uploadError.value = null
-  uploadDone.value = false
+  uploading.value = true;
+  uploadError.value = null;
+  uploadDone.value = false;
 
   try {
-    const resultUrl = await props.onUpload(file)
-    uploadDone.value = true
-    emit('uploaded', resultUrl)
+    const resultUrl = await props.onUpload(file);
+    uploadDone.value = true;
+    emit("uploaded", resultUrl);
   } catch (err) {
-    uploadError.value = err instanceof Error ? err.message : 'Erro ao fazer upload.'
+    uploadError.value =
+      err instanceof Error ? err.message : "Erro ao fazer upload.";
     // revert preview on error
-    previewUrl.value = props.currentImageUrl ?? null
+    previewUrl.value = props.currentImageUrl ?? null;
   } finally {
-    uploading.value = false
+    uploading.value = false;
     // reset input so same file can be re-selected
-    if (fileInput.value) fileInput.value.value = ''
+    if (fileInput.value) fileInput.value.value = "";
   }
 }
 </script>
 
 <template>
   <div class="flex flex-col items-start gap-2">
-    <p v-if="label" class="text-xs font-semibold text-muted uppercase tracking-wider">{{ label }}</p>
+    <p
+      v-if="label"
+      class="text-xs font-semibold text-muted uppercase tracking-wider"
+    >
+      {{ label }}
+    </p>
 
     <div class="flex items-center gap-4">
       <!-- Preview -->
@@ -116,19 +129,30 @@ async function onFileChange(e: Event) {
           :disabled="uploading"
           @click="openPicker"
           class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border transition-colors disabled:opacity-50"
-          :class="uploadDone
-            ? 'bg-secondary/10 border-secondary/30 text-secondary hover:bg-secondary/20'
-            : 'bg-[var(--color-surface-2)] border-[var(--color-border)] text-muted hover:text-white hover:border-[var(--color-muted)]/50'"
+          :class="
+            uploadDone
+              ? 'bg-secondary/10 border-secondary/30 text-secondary hover:bg-secondary/20'
+              : 'bg-[var(--color-surface-2)] border-[var(--color-border)] text-muted hover:text-white hover:border-[var(--color-muted)]/50'
+          "
         >
           <CheckCircle2 v-if="uploadDone && !uploading" class="w-4 h-4" />
           <Loader2 v-else-if="uploading" class="w-4 h-4 animate-spin" />
           <Upload v-else class="w-4 h-4" />
-          {{ uploading ? 'Enviando…' : uploadDone ? 'Imagem enviada!' : 'Escolher imagem' }}
+          {{
+            uploading
+              ? "Enviando…"
+              : uploadDone
+                ? "Imagem enviada!"
+                : "Escolher imagem"
+          }}
         </button>
 
         <p class="text-[11px] text-muted">JPG, PNG ou WEBP · máx. 5 MB</p>
 
-        <p v-if="uploadError" class="flex items-center gap-1.5 text-xs text-red-400">
+        <p
+          v-if="uploadError"
+          class="flex items-center gap-1.5 text-xs text-red-400"
+        >
           <AlertCircle class="w-3.5 h-3.5 flex-shrink-0" />
           {{ uploadError }}
         </p>

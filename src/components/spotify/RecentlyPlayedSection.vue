@@ -209,7 +209,9 @@ async function goToAlbum(album: TopAlbumDTO) {
             class="absolute bottom-1.5 left-1.5 flex items-center gap-1 bg-black/70 backdrop-blur-sm rounded-full px-1.5 py-0.5"
           >
             <TrendingUp class="w-2.5 h-2.5 text-[#1DB954]" />
-            <span class="text-[10px] font-bold text-white">{{ album.playCount }}</span>
+            <span class="text-[10px] font-bold text-white">{{
+              album.playCount
+            }}</span>
           </div>
         </div>
 
@@ -224,7 +226,7 @@ async function goToAlbum(album: TopAlbumDTO) {
             {{ getArtistNames(album) }}
           </p>
           <p class="text-[10px] text-[#1DB954]/80 font-medium">
-            {{ album.playCount }} play{{ album.playCount !== 1 ? 's' : '' }}
+            {{ album.playCount }} play{{ album.playCount !== 1 ? "s" : "" }}
           </p>
         </div>
       </div>
