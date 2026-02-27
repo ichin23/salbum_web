@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Search, X, Disc3, Music2, User, Music, Plus, UserCheck, UserPlus, Loader2 } from "lucide-vue-next";
+import {
+  Search,
+  X,
+  Disc3,
+  Music2,
+  User,
+  Music,
+  Plus,
+  UserCheck,
+  UserPlus,
+  Loader2,
+} from "lucide-vue-next";
 import { fetchSearch } from "../services/fetchService";
 import { searchUsers, followUser, unfollowUser } from "../services/userService";
 import { useAuthStore } from "../stores/auth";
@@ -24,10 +35,10 @@ const error = ref<string | null>(null);
 const searched = ref(false);
 
 // follow state: map userId -> 'loading' | true | false
-const followState = ref<Record<string, boolean | "loading">>({})
+const followState = ref<Record<string, boolean | "loading">>({});
 
 async function toggleFollow(user: UserDTO) {
-  followState.value[user.id] = 'loading';
+  followState.value[user.id] = "loading";
   try {
     if (user.is_following) {
       await unfollowUser(user.id);
@@ -243,9 +254,16 @@ watch(
     </div>
 
     <!-- Resultados: USUÁRIOS -->
-    <div v-else-if="searchType === 'user' && userResults.length > 0" class="space-y-2">
+    <div
+      v-else-if="searchType === 'user' && userResults.length > 0"
+      class="space-y-2"
+    >
       <p class="text-muted text-sm mb-4">
-        {{ userResults.length }} usuário{{ userResults.length !== 1 ? 's' : '' }} para "<span class="text-white">{{ query }}</span>"
+        {{ userResults.length }} usuário{{
+          userResults.length !== 1 ? "s" : ""
+        }}
+        para "<span class="text-white">{{ query }}</span
+        >"
       </p>
       <div
         v-for="user in userResults"
@@ -266,7 +284,11 @@ watch(
         </div>
         <!-- Info -->
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-white truncate group-hover:text-primary transition-colors">{{ user.name }}</p>
+          <p
+            class="text-sm font-semibold text-white truncate group-hover:text-primary transition-colors"
+          >
+            {{ user.name }}
+          </p>
           <p class="text-xs text-muted truncate">@{{ user.username }}</p>
           <p class="text-xs text-muted/60 mt-0.5">
             {{ user.followers_count }} seguidores
@@ -284,10 +306,19 @@ watch(
               : 'border-primary text-primary hover:bg-primary hover:text-white'
           "
         >
-          <Loader2 v-if="followState[user.id] === 'loading'" class="w-3.5 h-3.5 animate-spin" />
+          <Loader2
+            v-if="followState[user.id] === 'loading'"
+            class="w-3.5 h-3.5 animate-spin"
+          />
           <UserCheck v-else-if="user.is_following" class="w-3.5 h-3.5" />
           <UserPlus v-else class="w-3.5 h-3.5" />
-          {{ followState[user.id] === 'loading' ? '' : user.is_following ? 'Seguindo' : 'Seguir' }}
+          {{
+            followState[user.id] === "loading"
+              ? ""
+              : user.is_following
+                ? "Seguindo"
+                : "Seguir"
+          }}
         </button>
       </div>
     </div>

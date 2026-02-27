@@ -191,10 +191,7 @@ async function toggleFollow() {
                       : 'border-primary bg-primary text-white hover:bg-primary/90'
                   "
                 >
-                  <Loader2
-                    v-if="followLoading"
-                    class="w-4 h-4 animate-spin"
-                  />
+                  <Loader2 v-if="followLoading" class="w-4 h-4 animate-spin" />
                   <UserCheck v-else-if="user.is_following" class="w-4 h-4" />
                   <UserPlus v-else class="w-4 h-4" />
                   {{
@@ -250,9 +247,7 @@ async function toggleFollow() {
       <!-- ── Content ──────────────────────────────────────────────────────── -->
       <div class="px-4 sm:px-8 pt-6 space-y-6">
         <!-- Tab bar -->
-        <div
-          class="flex gap-1 bg-[var(--color-surface)] rounded-2xl p-1 w-fit"
-        >
+        <div class="flex gap-1 bg-[var(--color-surface)] rounded-2xl p-1 w-fit">
           <button
             v-for="tab in tabs"
             :key="tab.key"
@@ -286,10 +281,7 @@ async function toggleFollow() {
         </div>
 
         <!-- Feed loading -->
-        <div
-          v-if="loadingFeed"
-          class="flex items-center justify-center py-16"
-        >
+        <div v-if="loadingFeed" class="flex items-center justify-center py-16">
           <Loader2 class="w-6 h-6 text-primary animate-spin" />
         </div>
 
