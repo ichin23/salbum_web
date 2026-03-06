@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { getGoogleIdToken, loginWithSpotify } from "../../composables/useOAuth";
+import { loginWithGoogle, loginWithSpotify } from "../../composables/useOAuth";
 import { useAuthStore } from "../../stores/auth";
 
 const router = useRouter();
@@ -51,12 +51,8 @@ async function handleGoogle() {
   oauthLoading.value = "google";
   error.value = null;
   try {
-    const idToken = await getGoogleIdToken(); // abre popup GSI, resolve com id_token
-    await auth.loginWithGoogle(idToken); // POST /auth/login/google
-    router.replace({ name: "home" });
-  } catch (e) {
-    error.value =
-      e instanceof Error ? e.message : "Erro ao autenticar com Google.";
+    loginWithGoogle(); // redireciona — página vai trocar
+  } catch {
     oauthLoading.value = null;
   }
 }

@@ -5,6 +5,7 @@ import { useAuthStore } from "../stores/auth";
 import { getUserActivityFeed } from "../services/activityService";
 import type { ActivityItemDTO } from "../types";
 import FeedItemCard from "../components/FeedItem.vue";
+import AdBanner from "../components/AdBanner.vue";
 import AppImage from "../components/AppImage.vue";
 import { useRouter } from "vue-router";
 
@@ -156,8 +157,11 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
       </div>
     </div>
 
-    <!-- ── Content ────────────────────────────────────────────────────────── -->
+    <!-- ── Content ───────────────────────────────────────────────────── -->
     <div class="px-4 sm:px-8 pt-6 space-y-6">
+      <!-- Anúncio -->
+      <AdBanner ad-slot="4567890123" format="auto" />
+
       <!-- Tab bar -->
       <div class="flex gap-1 bg-[var(--color-surface)] rounded-2xl p-1 w-fit">
         <button

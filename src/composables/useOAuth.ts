@@ -1,127 +1,34 @@
 /**
  * useOAuth — Google e Spotify OAuth para web.
  *
+ * Ambos usam Authorization Code Flow com redirect completo (sem popup).
+ *
  * Google:
- *   Usa Google Identity Services (GSI) em modo popup.
- *   O GSI retorna diretamente um id_token JWT, que é enviado ao backend
- *   via POST /auth/login/google { id_token }.
- *   Não há redirect — tudo acontece no popup.
+ *   Redireciona para accounts.google.com com state (CSRF).
+ *   Volta para /auth/callback/google?code=&state=
+ *   OAuthCallbackView valida state e envia POST /auth/login/google { code, redirect_uri }.
  *
  * Spotify:
- *   Usa Authorization Code Flow + PKCE com redirect.
- *   O usuário é redirecionado para o Spotify, que volta para
- *   /auth/callback/spotify?code=...  O OAuthCallbackView envia
- *   o code ao backend via POST /auth/login/spotify { code, redirect_uri }.
+ *   Redireciona para accounts.spotify.com com state + PKCE.
+ *   Volta para /auth/callback/spotify?code=&state=
+ *   OAuthCallbackView valida state/PKCE e envia POST /auth/login/spotify { code, redirect_uri, code_verifier }.
  */
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+// ─── Config ────────────────────────────────────────────────────────────────────
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
 const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID ?? ''
 
 const BASE_URL = window.location.origin
+export const GOOGLE_REDIRECT_URI = `${BASE_URL}/auth/callback/google`
 export const SPOTIFY_REDIRECT_URI = `${BASE_URL}/auth/callback/spotify`
 
-// ─── Google — OAuth2 popup ────────────────────────────────────────────────────
-// Usa window.open para abrir o fluxo OAuth2 do Google e receber o id_token
-// via postMessage da página de callback.
-
-export const GOOGLE_REDIRECT_URI = `${BASE_URL}/auth/callback/google`
-
-declare global {
-    interface Window {
-        google?: {
-            accounts: {
-                id: {
-                    initialize(config: {
-                        client_id: string
-                        callback: (response: { credential: string }) => void
-                        auto_select?: boolean
-                    }): void
-                    prompt(): void
-                    cancel(): void
-                }
-                oauth2: {
-                    initCodeClient(config: {
-                        client_id: string
-                        scope: string
-                        ux_mode: 'popup' | 'redirect'
-                        redirect_uri?: string
-                        callback: (response: { code?: string; error?: string }) => void
-                    }): { requestCode(): void }
-                    initTokenClient(config: {
-                        client_id: string
-                        scope: string
-                        callback: (response: { access_token?: string; error?: string }) => void
-                    }): { requestAccessToken(): void }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Abre o popup do Google (oauth2 Authorization Code) e troca o code
- * por um id_token JWT no backend via POST /auth/login/google.
- *
- * Fluxo:
- *  1. GSI abre popup com Authorization Code Flow
- *  2. Google redireciona para /auth/callback/google?code=...
- *  3. OAuthCallbackView lê o code e chama auth.loginWithGoogle(code)
- *  4. authService envia POST /auth/login/google { id_token: code }
- *
- * Nota: o backend precisa fazer o exchange do code pelo id_token internamente,
- * ou o endpoint /auth/login/google deve aceitar o authorization code diretamente.
- */
-export function getGoogleIdToken(): Promise<string> {
-    return new Promise((resolve, reject) => {
-        if (!window.google) {
-            reject(new Error('Google Identity Services não carregado.'))
-            return
-        }
-
-        const client = window.google.accounts.oauth2.initCodeClient({
-            client_id: GOOGLE_CLIENT_ID,
-            scope: 'openid email profile',
-            ux_mode: 'popup',
-            redirect_uri: GOOGLE_REDIRECT_URI,
-            callback: (response) => {
-                if (response.code) {
-                    resolve(response.code)
-                } else {
-                    reject(new Error(response.error ?? 'Erro ao obter código do Google.'))
-                }
-            },
-        })
-
-        client.requestCode()
-    })
-}
-
-// ─── Spotify — PKCE redirect ──────────────────────────────────────────────────
+// ─── Shared utils ──────────────────────────────────────────────────────────────
 
 function generateRandomString(length: number): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'
     const array = new Uint8Array(length)
     crypto.getRandomValues(array)
     return Array.from(array, b => chars[b % chars.length]).join('')
-}
-
-async function sha256(plain: string): Promise<ArrayBuffer> {
-    const encoder = new TextEncoder()
-    return crypto.subtle.digest('SHA-256', encoder.encode(plain))
-}
-
-function base64URLEncode(buffer: ArrayBuffer): string {
-    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '')
-}
-
-async function generatePKCE(): Promise<{ verifier: string; challenge: string }> {
-    const verifier = generateRandomString(64)
-    const challenge = base64URLEncode(await sha256(verifier))
-    return { verifier, challenge }
 }
 
 function saveState(provider: string, state: string, verifier?: string) {
@@ -140,6 +47,53 @@ export function getStoredVerifier(provider: string) {
 export function clearOAuthStorage(provider: string) {
     sessionStorage.removeItem(`oauth_state_${provider}`)
     sessionStorage.removeItem(`oauth_verifier_${provider}`)
+}
+
+// ─── Google — Implicit Flow (id_token direto no hash) ─────────────────────────
+
+/**
+ * Redireciona para o Google com response_type=id_token (Implicit Flow).
+ * O Google retorna o id_token JWT no fragmento da URL:
+ *   /auth/callback/google#id_token=...&state=...
+ * Sem popup, sem COOP, sem exchange de code.
+ */
+export function loginWithGoogle(): void {
+    const state = generateRandomString(16)
+    const nonce = generateRandomString(16)
+    saveState('google', state)
+    sessionStorage.setItem('oauth_nonce_google', nonce)
+
+    const params = new URLSearchParams({
+        client_id: GOOGLE_CLIENT_ID,
+        redirect_uri: GOOGLE_REDIRECT_URI,
+        response_type: 'id_token',
+        scope: 'openid email profile',
+        prompt: 'select_account',
+        state,
+        nonce,
+    })
+
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`
+}
+
+// ─── Spotify — PKCE redirect ───────────────────────────────────────────────────
+
+async function sha256(plain: string): Promise<ArrayBuffer> {
+    const encoder = new TextEncoder()
+    return crypto.subtle.digest('SHA-256', encoder.encode(plain))
+}
+
+function base64URLEncode(buffer: ArrayBuffer): string {
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
+}
+
+async function generatePKCE(): Promise<{ verifier: string; challenge: string }> {
+    const verifier = generateRandomString(64)
+    const challenge = base64URLEncode(await sha256(verifier))
+    return { verifier, challenge }
 }
 
 /**

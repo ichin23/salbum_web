@@ -21,6 +21,7 @@ import type { FetchAlbumDetails, FullReviewDTO, ReviewDTO } from "../types";
 import AppImage from "../components/AppImage.vue";
 import MusicShareModal from "../components/share/MusicShareModal.vue";
 import ReviewCard from "../components/review/ReviewCard.vue";
+import AdBanner from "../components/AdBanner.vue";
 import type { ShareTarget } from "../components/share/MusicShareModal.vue";
 import { useListenList, fetchListenList } from "../composables/useListenList";
 
@@ -307,6 +308,9 @@ const firstArtistId = computed(() => album.value?.artists[0]?.id ?? null);
 
     <!-- Conteúdo -->
     <div class="px-4 sm:px-8 pb-12 space-y-8 sm:space-y-10">
+      <!-- Anúncio -->
+      <AdBanner ad-slot="2345678901" format="horizontal" />
+
       <!-- Tracklist -->
       <section v-if="album.musics.length">
         <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">

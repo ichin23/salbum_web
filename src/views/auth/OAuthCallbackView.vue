@@ -24,6 +24,53 @@ onMounted(async () => {
   const state = route.query.state as string | undefined;
   const error = route.query.error as string | undefined;
 
+  // ── Google: valida state e autentica ─────────────────────────────────────────────
+  if (provider === "google") {
+    // Implicit Flow retorna os parâmetros no fragmento (#), não no query string
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const idToken = hash.get("id_token");
+    const hashState = hash.get("state");
+    const hashError = hash.get("error");
+
+    if (hashError) {
+      status.value = "error";
+      errorMessage.value =
+        hashError === "access_denied"
+          ? "Acesso negado pelo usuário."
+          : `Erro do Google: ${hashError}`;
+      return;
+    }
+
+    const storedState = getStoredState(provider);
+    if (!storedState || storedState !== hashState) {
+      status.value = "error";
+      errorMessage.value =
+        "Falha na validação de segurança (state inválido). Tente novamente.";
+      clearOAuthStorage(provider);
+      return;
+    }
+
+    clearOAuthStorage(provider);
+    sessionStorage.removeItem("oauth_nonce_google");
+
+    if (!idToken) {
+      status.value = "error";
+      errorMessage.value = "Token do Google não encontrado.";
+      return;
+    }
+
+    try {
+      await auth.loginWithGoogle(idToken);
+      status.value = "success";
+      setTimeout(() => router.replace({ name: "home" }), 1200);
+    } catch (err) {
+      status.value = "error";
+      errorMessage.value =
+        err instanceof Error ? err.message : "Erro desconhecido.";
+    }
+    return;
+  }
+
   // ── Provider negou acesso ─────────────────────────────────────────────────
   if (error) {
     status.value = "error";
@@ -41,7 +88,7 @@ onMounted(async () => {
     return;
   }
 
-  // ── CSRF: valida state (apenas Spotify usa state/PKCE) ───────────────────
+  // ── Spotify: valida state/PKCE e autentica ────────────────────────────────
   if (provider === "spotify") {
     const storedState = getStoredState(provider);
     if (!storedState || storedState !== state) {
@@ -74,16 +121,9 @@ onMounted(async () => {
     return;
   }
 
-  // ── Google: POST /auth/login/google { id_token: code } ───────────────────
-  try {
-    await auth.loginWithGoogle(code);
-    status.value = "success";
-    setTimeout(() => router.replace({ name: "home" }), 1200);
-  } catch (err) {
-    status.value = "error";
-    errorMessage.value =
-      err instanceof Error ? err.message : "Erro desconhecido.";
-  }
+  // Provedor desconhecido
+  status.value = "error";
+  errorMessage.value = `Provedor OAuth desconhecido: ${provider}`;
 });
 
 const providerLabel = (p: string) => (p === "google" ? "Google" : "Spotify");
