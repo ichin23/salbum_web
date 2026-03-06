@@ -223,7 +223,7 @@ watch(
     </div>
 
     <!-- Anúncio -->
-    <AdBanner v-if="searched" ad-slot="3456789012" format="auto" />
+    <AdBanner v-if="searched" ad-slot="6871027345" format="auto" />
 
     <!-- Skeleton loading: grid para álbuns/artistas -->
     <div

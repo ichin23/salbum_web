@@ -309,7 +309,7 @@ const firstArtistId = computed(() => album.value?.artists[0]?.id ?? null);
     <!-- Conteúdo -->
     <div class="px-4 sm:px-8 pb-12 space-y-8 sm:space-y-10">
       <!-- Anúncio -->
-      <AdBanner ad-slot="2345678901" format="horizontal" />
+      <AdBanner ad-slot="5135128051" format="horizontal" />
 
       <!-- Tracklist -->
       <section v-if="album.musics.length">

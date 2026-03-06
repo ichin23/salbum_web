@@ -160,7 +160,7 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
     <!-- ── Content ───────────────────────────────────────────────────── -->
     <div class="px-4 sm:px-8 pt-6 space-y-6">
       <!-- Anúncio -->
-      <AdBanner ad-slot="4567890123" format="auto" />
+      <AdBanner ad-slot="9361459318" format="auto" />
 
       <!-- Tab bar -->
       <div class="flex gap-1 bg-[var(--color-surface)] rounded-2xl p-1 w-fit">

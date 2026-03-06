@@ -66,7 +66,7 @@ async function loadMore() {
     <RecentlyPlayedSection />
 
     <!-- Anúncio -->
-    <AdBanner ad-slot="1234567890" format="auto" />
+    <AdBanner ad-slot="3123354022" format="auto" />
 
     <!-- Feed de atividades -->
     <section>
