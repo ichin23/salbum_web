@@ -53,7 +53,8 @@ const hasFeelings = computed(
   () => !!review.value.trackScores?.some((ts) => ts.feeling),
 );
 const hasBothFeelingAndScore = computed(
-  () => !!review.value.trackScores?.some((ts) => ts.feeling && ts.score != null),
+  () =>
+    !!review.value.trackScores?.some((ts) => ts.feeling && ts.score != null),
 );
 const showChart = ref(false);
 const spotifyUrl = computed(() => review.value.album?.spotify_url ?? null);
@@ -156,14 +157,16 @@ async function confirmDelete() {
     <!-- Header -->
     <div class="flex items-start justify-between gap-3">
       <div class="flex items-center gap-3">
-        <AppImage
-          :src="review.user.imageUrl"
-          :alt="review.user.username"
-          :initial="(review.user.username[0] ?? '?').toUpperCase()"
-          type="artist"
-          rounded="full"
-          class="w-9 h-9 flex-shrink-0"
-        />
+        <div class="w-9 h-9 flex-shrink-0">
+          <AppImage
+            :src="review.user.imageUrl"
+            :alt="review.user.username"
+            :initial="(review.user.username[0] ?? '?').toUpperCase()"
+            type="artist"
+            rounded="full"
+            class="w-full h-full"
+          />
+        </div>
         <div>
           <p class="text-sm font-semibold text-white">
             {{ review.user.username }}
@@ -266,9 +269,14 @@ async function confirmDelete() {
         >
           <component :is="expanded ? ChevronUp : ChevronDown" class="w-4 h-4" />
           {{ expanded ? "Ocultar" : "Ver" }}
-          {{ hasBothFeelingAndScore ? "sentimentos + notas" : hasFeelings ? "sentimentos" : "notas" }} por faixa ({{
-            review.trackScores!.length
-          }})
+          {{
+            hasBothFeelingAndScore
+              ? "sentimentos + notas"
+              : hasFeelings
+                ? "sentimentos"
+                : "notas"
+          }}
+          por faixa ({{ review.trackScores!.length }})
         </button>
 
         <button
