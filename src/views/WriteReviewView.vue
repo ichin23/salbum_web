@@ -48,7 +48,20 @@ onMounted(async () => {
         const hasFeelings = data.userReview.trackScores.some(
           (ts) => ts.feeling,
         );
-        if (hasFeelings) {
+        const hasBoth = data.userReview.trackScores.some(
+          (ts) => ts.feeling && ts.score != null,
+        );
+        if (hasBoth) {
+          scoreMode.value = "feelings+score";
+          for (const ts of data.userReview.trackScores) {
+            if (ts.feeling) trackFeelings[ts.trackId] = ts.feeling;
+            if (ts.score != null) trackFeelingScores[ts.trackId] = ts.score;
+          }
+          if (data.userReview.albumScore != null) {
+            showAlbumScore.value = true;
+            albumScore.value = data.userReview.albumScore;
+          }
+        } else if (hasFeelings) {
           scoreMode.value = "feelings";
           for (const ts of data.userReview.trackScores) {
             if (ts.feeling) trackFeelings[ts.trackId] = ts.feeling;
@@ -78,13 +91,15 @@ const feelingsByCategory = computed(() => ({
 }));
 
 // ─── Form state ───────────────────────────────────────────────────────────────
-type ScoreMode = "album" | "tracks" | "feelings";
+type ScoreMode = "album" | "tracks" | "feelings" | "feelings+score";
 const scoreMode = ref<ScoreMode>("feelings");
 const content = ref("");
 const albumScore = ref(50);
 const showAlbumScore = ref(false);
 const trackScores = reactive<Record<string, number>>({});
 const trackFeelings = reactive<Record<string, string>>({});
+// scores used alongside feelings in 'feelings+score' mode
+const trackFeelingScores = reactive<Record<string, number>>({});
 const loading = ref(false);
 const submitError = ref<string | null>(null);
 
@@ -98,6 +113,7 @@ const canSubmit = computed(() => {
   if (scoreMode.value === "album") return true;
   if (scoreMode.value === "tracks") return hasAnyScore.value;
   if (scoreMode.value === "feelings") return hasAnyFeeling.value;
+  if (scoreMode.value === "feelings+score") return hasAnyFeeling.value;
   return false;
 });
 
@@ -163,6 +179,26 @@ function buildPayload() {
         feeling: trackFeelings[m.id],
       }));
     if (scores.length) payload.trackScores = scores;
+    if (showAlbumScore.value) payload.albumScore = albumScore.value;
+  } else if (scoreMode.value === "feelings+score" && album.value) {
+    const scores: TrackScoreDTO[] = album.value.musics
+      .filter((m) => !!trackFeelings[m.id])
+      .map((m) => ({
+        trackId: m.id,
+        trackNumber: m.position,
+        trackName: m.name,
+        feeling: trackFeelings[m.id],
+        score: trackFeelingScores[m.id] ?? null,
+      }));
+    if (scores.length) {
+      payload.trackScores = scores;
+      // compute average from tracks that have a score
+      const scored = scores.filter((s) => s.score != null && s.score > 0);
+      if (scored.length && !showAlbumScore.value) {
+        const avg = scored.reduce((sum, s) => sum + s.score!, 0) / scored.length;
+        payload.albumScore = Math.round(avg);
+      }
+    }
     if (showAlbumScore.value) payload.albumScore = albumScore.value;
   }
 
@@ -241,12 +277,13 @@ function buildPayload() {
         <label class="text-sm font-semibold text-white"
           >Modo de avaliação</label
         >
-        <div class="grid grid-cols-3 gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <label
             v-for="opt in [
               { value: 'album', label: 'Nota única', emoji: '🎯' },
               { value: 'tracks', label: 'Nota por faixa', emoji: '🎚️' },
               { value: 'feelings', label: 'Sentimentos', emoji: '🎭' },
+              { value: 'feelings+score', label: 'Sentimento + Nota', emoji: '🎭🎚️' },
             ]"
             :key="opt.value"
             class="flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl border cursor-pointer transition-all duration-200 text-center"
@@ -347,6 +384,154 @@ function buildPayload() {
               step="1"
               class="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-primary bg-[var(--color-surface-2)]"
             />
+          </div>
+        </div>
+      </section>
+
+      <!-- Feelings + Score per-track -->
+      <section v-if="scoreMode === 'feelings+score'" class="space-y-4">
+        <!-- Optional manual album score override -->
+        <div class="card p-4 space-y-3">
+          <label class="flex items-center justify-between cursor-pointer">
+            <span class="text-sm font-semibold text-white"
+              >Nota geral do álbum
+              <span class="text-muted font-normal text-xs">(opcional — senão usa média)</span></span
+            >
+            <button
+              @click="showAlbumScore = !showAlbumScore"
+              class="relative w-10 h-5.5 rounded-full transition-colors flex-shrink-0"
+              :class="
+                showAlbumScore
+                  ? 'bg-primary'
+                  : 'bg-[var(--color-surface-2)] border border-[var(--color-border)]'
+              "
+            >
+              <span
+                class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform"
+                :class="showAlbumScore ? 'translate-x-[18px]' : ''"
+              />
+            </button>
+          </label>
+          <div v-if="showAlbumScore" class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-muted">Nota do álbum</span>
+              <span class="text-xl font-black text-primary tabular-nums">{{ albumScore }}</span>
+            </div>
+            <input
+              v-model.number="albumScore"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              class="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary bg-[var(--color-surface-2)]"
+            />
+          </div>
+        </div>
+
+        <p class="text-sm font-semibold text-white">Sentimento e nota por faixa</p>
+        <div class="space-y-3">
+          <div
+            v-for="music in album.musics"
+            :key="music.id"
+            class="card p-4 space-y-3"
+          >
+            <!-- Track header -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-muted font-mono w-5 text-right flex-shrink-0"
+                >{{ music.position }}.</span
+              >
+              <span class="text-sm font-semibold text-white flex-1 truncate">{{ music.name }}</span>
+              <button
+                v-if="trackFeelings[music.id]"
+                @click="() => { delete trackFeelings[music.id]; delete trackFeelingScores[music.id]; }"
+                class="text-xs text-muted hover:text-red-400 transition-colors flex-shrink-0"
+              >
+                ✕ limpar
+              </button>
+            </div>
+
+            <!-- Selected feeling badge + score preview -->
+            <div v-if="trackFeelings[music.id]" class="flex items-center gap-2 flex-wrap">
+              <span class="text-lg">{{ allFeelings.find((f) => f.value === trackFeelings[music.id])?.emoji }}</span>
+              <span class="text-sm font-medium text-white">{{ allFeelings.find((f) => f.value === trackFeelings[music.id])?.label }}</span>
+              <span
+                class="text-xs px-2 py-0.5 rounded-full"
+                :class="{
+                  'bg-green-500/15 text-green-400': (allFeelings.find((f) => f.value === trackFeelings[music.id])?.intensity ?? 0) > 0,
+                  'bg-red-500/15 text-red-400': (allFeelings.find((f) => f.value === trackFeelings[music.id])?.intensity ?? 0) < 0,
+                  'bg-[var(--color-surface-2)] text-muted': (allFeelings.find((f) => f.value === trackFeelings[music.id])?.intensity ?? 0) === 0,
+                }"
+              >
+                {{ (allFeelings.find((f) => f.value === trackFeelings[music.id])?.intensity ?? 0) > 0 ? '+' : '' }}{{ allFeelings.find((f) => f.value === trackFeelings[music.id])?.intensity ?? '' }}
+              </span>
+            </div>
+
+            <!-- Feeling buttons -->
+            <div class="space-y-2">
+              <div v-if="feelingsByCategory.positive.length" class="space-y-1">
+                <p class="text-[10px] uppercase tracking-widest text-green-500/70 font-semibold">Positivos</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="f in feelingsByCategory.positive"
+                    :key="f.value"
+                    @click="trackFeelings[music.id] = f.value"
+                    class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
+                    :class="trackFeelings[music.id] === f.value ? 'bg-green-500/20 border-green-500/50 text-green-300' : 'bg-[var(--color-surface-2)] border-[var(--color-border)] text-muted hover:border-green-500/30 hover:text-green-400'"
+                  >
+                    <span>{{ f.emoji }}</span> {{ f.label }}
+                  </button>
+                </div>
+              </div>
+              <div v-if="feelingsByCategory.neutral.length" class="space-y-1">
+                <p class="text-[10px] uppercase tracking-widest text-muted/70 font-semibold">Neutros</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="f in feelingsByCategory.neutral"
+                    :key="f.value"
+                    @click="trackFeelings[music.id] = f.value"
+                    class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
+                    :class="trackFeelings[music.id] === f.value ? 'bg-[var(--color-surface)] border-[var(--color-muted)]/50 text-white' : 'bg-[var(--color-surface-2)] border-[var(--color-border)] text-muted hover:border-[var(--color-muted)]/40 hover:text-white'"
+                  >
+                    <span>{{ f.emoji }}</span> {{ f.label }}
+                  </button>
+                </div>
+              </div>
+              <div v-if="feelingsByCategory.negative.length" class="space-y-1">
+                <p class="text-[10px] uppercase tracking-widest text-red-500/70 font-semibold">Negativos</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="f in feelingsByCategory.negative"
+                    :key="f.value"
+                    @click="trackFeelings[music.id] = f.value"
+                    class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
+                    :class="trackFeelings[music.id] === f.value ? 'bg-red-500/20 border-red-500/50 text-red-300' : 'bg-[var(--color-surface-2)] border-[var(--color-border)] text-muted hover:border-red-500/30 hover:text-red-400'"
+                  >
+                    <span>{{ f.emoji }}</span> {{ f.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Numeric score slider (shown after feeling is selected) -->
+            <div v-if="trackFeelings[music.id]" class="space-y-1.5 pt-1 border-t border-[var(--color-border)]">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-muted">Nota desta faixa</span>
+                <span
+                  class="text-sm font-bold tabular-nums"
+                  :class="(trackFeelingScores[music.id] ?? 0) > 0 ? 'text-primary' : 'text-muted'"
+                >
+                  {{ trackFeelingScores[music.id] ?? 0 }}
+                </span>
+              </div>
+              <input
+                v-model.number="trackFeelingScores[music.id]"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                class="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-primary bg-[var(--color-surface-2)]"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -557,6 +742,10 @@ function buildPayload() {
             <template v-else-if="scoreMode === 'feelings'">
               {{ Object.keys(trackFeelings).length }}/{{ album.musics.length }}
               faixas com sentimento
+            </template>
+            <template v-else-if="scoreMode === 'feelings+score'">
+              {{ Object.keys(trackFeelings).length }}/{{ album.musics.length }}
+              faixas · {{ Object.values(trackFeelingScores).filter((s) => s > 0).length }} com nota
             </template>
           </div>
           <button

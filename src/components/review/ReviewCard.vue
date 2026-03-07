@@ -52,6 +52,9 @@ const hasTracks = computed(() => !!review.value.trackScores?.length);
 const hasFeelings = computed(
   () => !!review.value.trackScores?.some((ts) => ts.feeling),
 );
+const hasBothFeelingAndScore = computed(
+  () => !!review.value.trackScores?.some((ts) => ts.feeling && ts.score != null),
+);
 const showChart = ref(false);
 const spotifyUrl = computed(() => review.value.album?.spotify_url ?? null);
 
@@ -263,7 +266,7 @@ async function confirmDelete() {
         >
           <component :is="expanded ? ChevronUp : ChevronDown" class="w-4 h-4" />
           {{ expanded ? "Ocultar" : "Ver" }}
-          {{ hasFeelings ? "sentimentos" : "notas" }} por faixa ({{
+          {{ hasBothFeelingAndScore ? "sentimentos + notas" : hasFeelings ? "sentimentos" : "notas" }} por faixa ({{
             review.trackScores!.length
           }})
         </button>
@@ -335,10 +338,11 @@ async function confirmDelete() {
             }"
             >{{ ts.feeling }}</span
           >
-          <!-- Numeric score -->
+          <!-- Numeric score alongside feeling (feelings+score mode) or standalone -->
           <span
-            v-else-if="ts.score != null"
-            class="text-xs font-semibold text-white w-8 text-right flex-shrink-0"
+            v-if="ts.score != null"
+            class="text-xs font-semibold tabular-nums flex-shrink-0"
+            :class="ts.feeling ? 'text-primary' : 'text-white w-8 text-right'"
             >{{ ts.score }}</span
           >
         </div>
