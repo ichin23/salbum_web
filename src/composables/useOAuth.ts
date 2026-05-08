@@ -13,6 +13,7 @@
  *   Volta para /auth/callback/spotify?code=&state=
  *   OAuthCallbackView valida state/PKCE e envia POST /auth/login/spotify { code, redirect_uri, code_verifier }.
  */
+import CryptoJS from 'crypto-js'
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
@@ -27,7 +28,13 @@ export const SPOTIFY_REDIRECT_URI = `${BASE_URL}/auth/callback/spotify`
 function generateRandomString(length: number): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'
     const array = new Uint8Array(length)
-    crypto.getRandomValues(array)
+    if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(array)
+    } else {
+        for (let i = 0; i < length; i++) {
+            array[i] = Math.floor(Math.random() * 256)
+        }
+    }
     return Array.from(array, b => chars[b % chars.length]).join('')
 }
 
@@ -79,8 +86,18 @@ export function loginWithGoogle(): void {
 // ─── Spotify — PKCE redirect ───────────────────────────────────────────────────
 
 async function sha256(plain: string): Promise<ArrayBuffer> {
-    const encoder = new TextEncoder()
-    return crypto.subtle.digest('SHA-256', encoder.encode(plain))
+    if (window.crypto && window.crypto.subtle) {
+        const encoder = new TextEncoder()
+        return crypto.subtle.digest('SHA-256', encoder.encode(plain))
+    } else {
+        // Fallback for non-secure contexts (HTTP over network)
+        const hash = CryptoJS.SHA256(plain)
+        const typedArray = new Uint8Array(hash.sigBytes)
+        for (let i = 0; i < hash.sigBytes; i++) {
+            typedArray[i] = (hash.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff
+        }
+        return typedArray.buffer
+    }
 }
 
 function base64URLEncode(buffer: ArrayBuffer): string {

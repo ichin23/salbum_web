@@ -52,17 +52,20 @@ async function handleGoogle() {
   error.value = null;
   try {
     loginWithGoogle(); // redireciona — página vai trocar
-  } catch {
+  } catch (e: any) {
     oauthLoading.value = null;
+    error.value = e.message || "Erro desconhecido ao iniciar o Google OAuth.";
   }
 }
 
 async function handleSpotify() {
   oauthLoading.value = "spotify";
+  error.value = null;
   try {
     await loginWithSpotify(); // redireciona — página vai trocar
-  } catch {
+  } catch (e: any) {
     oauthLoading.value = null;
+    error.value = e.message || "Erro desconhecido ao iniciar o Spotify OAuth.";
   }
 }
 </script>
