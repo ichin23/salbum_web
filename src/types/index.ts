@@ -144,12 +144,14 @@ export interface FetchMusic {
     length: number       // ms
     mbid: string | null
     position: number
+    discNumber?: number
     artists: FetchArtist[]
 }
 
 export interface FetchAlbumDetails extends Omit<FetchAlbum, 'artists'> {
     musics: FetchMusic[]
     artists: FetchArtist[]
+    discs?: Record<string, FetchMusic[]>
 }
 
 export interface FetchReleaseDetailsResponse {
@@ -395,6 +397,7 @@ export interface UserDTO {
     followers_count: number
     following_count: number
     is_following: boolean
+    pinned_albums?: AlbumInfoDTO[]
 }
 
 /** ReviewCommentDTO — comment on a review */

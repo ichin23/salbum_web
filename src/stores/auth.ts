@@ -151,6 +151,12 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem(USER_KEY, JSON.stringify(updated))
     }
 
+    async function updatePinnedAlbums(albumIds: string[]) {
+        const updated = await userService.updatePinnedAlbums(albumIds)
+        user.value = updated
+        localStorage.setItem(USER_KEY, JSON.stringify(updated))
+    }
+
     function logout() {
         clearSession()
     }
@@ -173,6 +179,7 @@ export const useAuthStore = defineStore('auth', () => {
         refresh,
         resetPassword,
         updateProfile,
+        updatePinnedAlbums,
         logout,
     }
 })

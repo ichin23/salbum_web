@@ -14,7 +14,7 @@ import {
   BookmarkCheck,
   Pencil,
 } from "lucide-vue-next";
-import { fetchArtistDetails } from "../services/fetchService";
+import { fetchArtistDetails, syncArtist } from "../services/fetchService";
 import type { FetchArtistDetails, FetchAlbum } from "../types";
 import MusicShareModal from "../components/share/MusicShareModal.vue";
 import type { ShareTarget } from "../components/share/MusicShareModal.vue";
@@ -28,6 +28,9 @@ const router = useRouter();
 const artist = ref<FetchArtistDetails | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+const isSyncing = ref(false);
+const syncMessage = ref<string | null>(null);
 
 const { hasArtist, addArtist, removeArtist } = useListenList();
 
@@ -43,6 +46,10 @@ onMounted(async () => {
     artist.value =
       (data as { artist?: FetchArtistDetails }).artist ??
       (data as unknown as FetchArtistDetails);
+
+    if (artist.value?.mbid && artist.value?.albums && artist.value.albums.length < 5) {
+      handleSyncArtist();
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : "Erro ao carregar artista";
   } finally {
@@ -82,6 +89,24 @@ const sortedAlbums = computed<FetchAlbum[]>(() => {
   });
 });
 
+const selectedAlbumType = ref<'all' | 'Album' | 'EP' | 'Single'>('all');
+
+const availableTypes = computed(() => {
+  const types = new Set<string>();
+  if (artist.value?.albums) {
+    artist.value.albums.forEach(a => {
+      if (a.type) types.add(a.type.toLowerCase());
+    });
+  }
+  return types;
+});
+
+const filteredAlbums = computed<FetchAlbum[]>(() => {
+  if (selectedAlbumType.value === 'all') return sortedAlbums.value;
+  return sortedAlbums.value.filter(a => a.type?.toLowerCase() === selectedAlbumType.value.toLowerCase());
+});
+
+
 // ─── Share ────────────────────────────────────────────────────────────────────
 const shareTarget = ref<ShareTarget | null>(null);
 
@@ -99,6 +124,23 @@ function shareArtist() {
 function onShared(comment: string) {
   console.log("MusicShare submitted:", shareTarget.value, comment);
   shareTarget.value = null;
+}
+
+async function handleSyncArtist() {
+  if (!artist.value || isSyncing.value) return;
+  isSyncing.value = true;
+  syncMessage.value = null;
+  try {
+    await syncArtist(artist.value.id);
+    syncMessage.value = "Em breve o perfil será atualizado.";
+  } catch (e) {
+    syncMessage.value = "Erro ao sincronizar.";
+  } finally {
+    isSyncing.value = false;
+    setTimeout(() => {
+      syncMessage.value = null;
+    }, 5000);
+  }
 }
 </script>
 
@@ -258,6 +300,11 @@ function onShared(comment: string) {
                 Editar
               </RouterLink>
             </div>
+            
+            <!-- Sync message -->
+            <div v-if="syncMessage" class="text-sm mt-2 text-primary font-medium" :class="{ 'text-red-400': syncMessage.includes('Erro') }">
+              {{ syncMessage }}
+            </div>
           </div>
         </div>
       </div>
@@ -265,17 +312,54 @@ function onShared(comment: string) {
 
     <!-- Albums section -->
     <div class="px-4 sm:px-8 pt-4">
-      <h2 class="text-lg font-bold text-white mb-5 flex items-center gap-2">
-        <Disc3 class="w-5 h-5 text-primary" />
-        Discografia
-      </h2>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-4">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <Disc3 class="w-5 h-5 text-primary" />
+          Discografia
+        </h2>
+        
+        <!-- Filters -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" v-if="availableTypes.size > 1">
+          <button
+            @click="selectedAlbumType = 'all'"
+            class="whitespace-nowrap px-3 py-1 rounded-full text-sm font-medium transition-colors border"
+            :class="selectedAlbumType === 'all' ? 'bg-white text-black border-white' : 'bg-[var(--color-surface-2)] text-muted border-[var(--color-border)] hover:text-white hover:border-[var(--color-muted)]/50'"
+          >
+            Todos
+          </button>
+          <button
+            v-if="availableTypes.has('album')"
+            @click="selectedAlbumType = 'Album'"
+            class="whitespace-nowrap px-3 py-1 rounded-full text-sm font-medium transition-colors border"
+            :class="selectedAlbumType === 'Album' ? 'bg-white text-black border-white' : 'bg-[var(--color-surface-2)] text-muted border-[var(--color-border)] hover:text-white hover:border-[var(--color-muted)]/50'"
+          >
+            Álbuns
+          </button>
+          <button
+            v-if="availableTypes.has('ep')"
+            @click="selectedAlbumType = 'EP'"
+            class="whitespace-nowrap px-3 py-1 rounded-full text-sm font-medium transition-colors border"
+            :class="selectedAlbumType === 'EP' ? 'bg-white text-black border-white' : 'bg-[var(--color-surface-2)] text-muted border-[var(--color-border)] hover:text-white hover:border-[var(--color-muted)]/50'"
+          >
+            EPs
+          </button>
+          <button
+            v-if="availableTypes.has('single')"
+            @click="selectedAlbumType = 'Single'"
+            class="whitespace-nowrap px-3 py-1 rounded-full text-sm font-medium transition-colors border"
+            :class="selectedAlbumType === 'Single' ? 'bg-white text-black border-white' : 'bg-[var(--color-surface-2)] text-muted border-[var(--color-border)] hover:text-white hover:border-[var(--color-muted)]/50'"
+          >
+            Singles
+          </button>
+        </div>
+      </div>
 
       <div
-        v-if="sortedAlbums.length > 0"
+        v-if="filteredAlbums.length > 0"
         class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"
       >
         <RouterLink
-          v-for="album in sortedAlbums"
+          v-for="album in filteredAlbums"
           :key="album.id"
           :to="{ name: 'album-detail', params: { id: album.id } }"
           class="group block"

@@ -22,6 +22,7 @@ export interface AuthUser {
     following_count: number
     email_validated: boolean
     spotify_linked: boolean
+    pinned_albums?: import('../types').AlbumInfoDTO[]
 }
 
 export type AuthStatus = 'SUCCESS' | 'MFA_REQUIRED' | 'FAILURE'

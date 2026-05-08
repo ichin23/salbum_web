@@ -1,0 +1,2654 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "REST API's RESTful from 0 with Java, SpringBoot, Kubernets and Docker",
+    "description": "REST API's RESTful from 0 with Java, SpringBoot, Kubernets and Docker",
+    "license": { "name": "Apache 2.0", "url": "https://github.com/ichin23" },
+    "version": "v1"
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Generated server url" }
+  ],
+  "tags": [
+    {
+      "name": "Activity",
+      "description": "Feed de atividades e histórico de usuários"
+    },
+    {
+      "name": "Music Share",
+      "description": "Compartilhamento de músicas, álbuns e artistas"
+    },
+    {
+      "name": "Listen List",
+      "description": "Lista de 'quero ouvir' do usuário"
+    },
+    { "name": "Albums", "description": "Criação e edição de álbuns" },
+    {
+      "name": "Fetch",
+      "description": "Busca e detalhes de álbuns, artistas e músicas via MusicBrainz"
+    },
+    {
+      "name": "Reviews",
+      "description": "Reviews de álbuns com scores por faixa"
+    },
+    { "name": "Artists", "description": "Busca e gestão de artistas" }
+  ],
+  "paths": {
+    "/users/me": {
+      "get": {
+        "tags": ["Users"],
+        "description": "Get authenticated user data",
+        "operationId": "getMe",
+        "responses": {
+          "200": {
+            "description": "success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserDTO" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "description": "Update authenticated user's name, username or bio",
+        "operationId": "updateMe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserUpdateDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserLoginOutDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/pinned-albums": {
+      "put": {
+        "tags": ["Users"],
+        "description": "Update authenticated user's pinned favorite albums",
+        "operationId": "updatePinnedAlbums",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": { "type": "string", "format": "uuid" }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserLoginOutDTO" }
+              }
+            }
+          },
+          "400": {
+            "description": "bad request - max pinned albums exceeded",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/UserLoginOutDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reviews/{id}": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Buscar review por ID",
+        "operationId": "getReviewById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/FullReviewDTO" }
+              }
+            }
+          },
+          "404": {
+            "description": "Não encontrada",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/FullReviewDTO" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Reviews"],
+        "summary": "Atualizar review",
+        "operationId": "updateReview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateReviewRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ReviewDTO" } }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Reviews"],
+        "summary": "Deletar review",
+        "operationId": "deleteReview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "204": { "description": "Deletada com sucesso" } }
+      }
+    },
+    "/musicShare/{shareId}": {
+      "put": {
+        "tags": ["Music Share"],
+        "summary": "Atualizar share",
+        "operationId": "updateMusicShare",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMusicShareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/MusicShareDTO" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Music Share"],
+        "summary": "Deletar share",
+        "operationId": "deleteMusicShare",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "204": { "description": "Deletado com sucesso" } }
+      }
+    },
+    "/artists/{id}": {
+      "get": {
+        "tags": ["Artists"],
+        "summary": "Detalhes de um artista",
+        "operationId": "getArtistDetails",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "UUID do artista",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ArtistDetailsDTO" }
+              }
+            }
+          },
+          "404": {
+            "description": "Artista não encontrado",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ArtistDetailsDTO" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Artists"],
+        "summary": "Atualizar artista",
+        "operationId": "updateArtist",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateArtistDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ArtistDetailsDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/albums/{id}": {
+      "put": {
+        "tags": ["Albums"],
+        "summary": "Atualizar álbum",
+        "operationId": "updateAlbum",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateAlbumDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/AlbumInfoDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}/follow": {
+      "post": {
+        "tags": ["user-controller"],
+        "operationId": "followUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      },
+      "delete": {
+        "tags": ["user-controller"],
+        "operationId": "unfollowUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/reviews": {
+      "post": {
+        "tags": ["Reviews"],
+        "summary": "Criar review",
+        "operationId": "createReview",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateReviewRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ReviewDTO" } }
+            }
+          },
+          "404": {
+            "description": "Álbum não encontrado",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          },
+          "409": {
+            "description": "Review já existe para este álbum",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/reviews/{id}/like": {
+      "post": {
+        "tags": ["Reviews"],
+        "summary": "Curtir review",
+        "operationId": "likeReview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      },
+      "delete": {
+        "tags": ["Reviews"],
+        "summary": "Descurtir review",
+        "operationId": "unlikeReview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
+    "/reviews/{id}/comments": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Listar comentários de uma review",
+        "operationId": "getComments",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ReviewCommentDTO" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Reviews"],
+        "summary": "Comentar em uma review",
+        "operationId": "addComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCommentRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ReviewCommentDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/musicShare/music": {
+      "post": {
+        "tags": ["Music Share"],
+        "summary": "Compartilhar música",
+        "operationId": "createMusicShare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMusicShareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/MusicShareDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/musicShare/artist": {
+      "post": {
+        "tags": ["Music Share"],
+        "summary": "Compartilhar artista",
+        "operationId": "createArtistMusicShare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMusicShareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/MusicShareDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/musicShare/album": {
+      "post": {
+        "tags": ["Music Share"],
+        "summary": "Compartilhar álbum",
+        "operationId": "createAlbumMusicShare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMusicShareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/MusicShareDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listenlist/music": {
+      "post": {
+        "tags": ["Listen List"],
+        "summary": "Adicionar música à lista",
+        "operationId": "addMusicItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ListenListInputDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ListenListItemDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listenlist/artist": {
+      "post": {
+        "tags": ["Listen List"],
+        "summary": "Adicionar artista à lista",
+        "operationId": "addArtisttem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ListenListInputDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ListenListItemDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listenlist/album": {
+      "post": {
+        "tags": ["Listen List"],
+        "summary": "Adicionar álbum à lista",
+        "operationId": "addItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ListenListInputDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ListenListItemDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/validateEmail": {
+      "post": {
+        "tags": ["Auth"],
+        "operationId": "validateEmailCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ValidateCodeDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/auth/validateCodeLogin": {
+      "post": {
+        "tags": ["Auth"],
+        "operationId": "validateLoginCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ValidateCodeDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/auth/resetPassword": {
+      "post": {
+        "tags": ["Auth"],
+        "operationId": "sendEmailRecoverPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestRecoverPasswordDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/auth/resendCode": {
+      "post": {
+        "tags": ["Auth"],
+        "operationId": "resendCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResendCodeInDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "description": "Create user on database",
+        "operationId": "registerUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserRegisterDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refreshToken": {
+      "post": {
+        "tags": ["Auth"],
+        "description": "Generate new token",
+        "operationId": "refreshToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RefreshTokenInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RefreshTokenOutput" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "description": "Login User",
+        "operationId": "loginUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserLoginDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TokenResponseDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/spotify": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login com Spotify",
+        "operationId": "loginSpotify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SpotifyCode" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponseDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/google": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login com Google",
+        "operationId": "loginGoogle",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GoogleCode" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponseDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/changePassword": {
+      "post": {
+        "tags": ["Auth"],
+        "operationId": "changePassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RequestChangePassword" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/artists": {
+      "get": {
+        "tags": ["Artists"],
+        "summary": "Buscar artistas",
+        "operationId": "searchArtist",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Termo de busca",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Forçar busca ignorando cache",
+            "required": false,
+            "schema": { "type": "boolean", "default": false }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ArtistInfoDTO" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Artists"],
+        "summary": "Criar artista",
+        "operationId": "saveArtist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateArtistDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ArtistDetailsDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/albums": {
+      "post": {
+        "tags": ["Albums"],
+        "summary": "Criar álbum",
+        "operationId": "saveAlbumt",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateAlbumDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/AlbumDetailsDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/profile-picture": {
+      "patch": {
+        "tags": ["user-controller"],
+        "operationId": "confirmProfilePicture",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConfirmImageDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/UserLoginOutDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "description": "Find usr by Id",
+        "operationId": "getUserById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TokenResponseDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}/is-following": {
+      "get": {
+        "tags": ["user-controller"],
+        "operationId": "isFollowing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "boolean" } } }
+          }
+        }
+      }
+    },
+    "/users/{id}/following": {
+      "get": {
+        "tags": ["user-controller"],
+        "operationId": "getFollowing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/UserDTO" },
+                  "uniqueItems": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}/followers": {
+      "get": {
+        "tags": ["user-controller"],
+        "operationId": "getFollowers",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/UserDTO" },
+                  "uniqueItems": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/search": {
+      "get": {
+        "tags": ["user-controller"],
+        "operationId": "searchUsers",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/UserDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/profile-picture/upload-url": {
+      "get": {
+        "tags": ["user-controller"],
+        "operationId": "getProfilePictureUploadUrl",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ImageUploadUrlDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spotify/search": {
+      "get": {
+        "tags": ["Spotify"],
+        "operationId": "searchArtist_1",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/spotify/me/top-albums-last-week": {
+      "get": {
+        "tags": ["Spotify"],
+        "summary": "Álbuns mais ouvidos na última semana",
+        "description": "Agrega o histórico recente do Spotify (até 50 plays) e retorna os álbuns\ntocados nos últimos 7 dias, ordenados por número de plays decrescente.\nRequer conta Spotify vinculada.\n",
+        "operationId": "getTopAlbumsLastWeek",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TopAlbumDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spotify/me/recently-played": {
+      "get": {
+        "tags": ["Spotify"],
+        "summary": "Músicas recentemente tocadas no Spotify",
+        "description": "Requer conta Spotify vinculada. Suporta paginação por cursor (before/after).",
+        "operationId": "getRecentlyPlayed",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32" }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecentlyPlayedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": ["search-controller"],
+        "operationId": "search",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/reviews/{id}/likes/me": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Verificar se o usuário curtiu a review",
+        "operationId": "isLikedByMe",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "boolean" } } }
+          }
+        }
+      }
+    },
+    "/reviews/{id}/likes/count": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Quantidade de curtidas da review",
+        "operationId": "getLikeCount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "type": "integer", "format": "int64" } }
+            }
+          }
+        }
+      }
+    },
+    "/reviews/{id}/emotion-chart": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Gráfico emocional de uma review",
+        "description": "Retorna a sequência de sentimentos/intensidades por faixa para construir o gráfico emocional do álbum.",
+        "operationId": "getEmotionChart",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackEmotionPointDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Review não encontrada",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrackEmotionPointDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reviews/feelings": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Sentimentos disponíveis para track scores",
+        "description": "Lista todos os sentimentos (feelings) que podem ser atribuídos a uma faixa no lugar de uma nota numérica.",
+        "operationId": "getFeelings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/FeelingOptionDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reviews/album/{albumId}": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Reviews de um álbum",
+        "operationId": "getReviewsByAlbum",
+        "parameters": [
+          {
+            "name": "albumId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/FullReviewInfoDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listenlist": {
+      "get": {
+        "tags": ["Listen List"],
+        "summary": "Listar itens do usuário",
+        "operationId": "getListenList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ListenListItemDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fetch": {
+      "get": {
+        "tags": ["Fetch"],
+        "summary": "Buscar álbuns, artistas ou músicas",
+        "description": "Pesquisa no banco local (full-text search) e, se não houver resultados ou `force=true`, busca no MusicBrainz e armazena em cache.\n\n**Tipos disponíveis:**\n- `album` — retorna `FetchResult` com lista de `AlbumInfoDTO` (id, name, type, country, release_date, rate, mbid, spotify_url, image_url, artists, genres)\n- `artist` — retorna `FetchResult` com lista de `ArtistInfoDTO`\n- `music` — retorna `FetchResult` com lista de `MusicInfoDTO`\n\nO parâmetro `artist` melhora a precisão da busca de álbum no Spotify, mas é opcional.\n",
+        "operationId": "fetchData",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Termo de busca",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "OK Computer"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Tipo: `album`, `artist` ou `music`",
+            "required": false,
+            "schema": { "type": "string", "default": "album" },
+            "example": "album"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Ignorar cache e forçar busca no MusicBrainz",
+            "required": false,
+            "schema": { "type": "boolean", "default": false }
+          },
+          {
+            "name": "artist",
+            "in": "query",
+            "description": "Nome do artista — melhora busca de álbum no Spotify; obrigatório para `type=music`",
+            "required": false,
+            "schema": { "type": "string", "default": "" },
+            "example": "Radiohead"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultados encontrados",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FetchResult" }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetro `type` inválido",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fetch/releaseDetails/{id}": {
+      "get": {
+        "tags": ["Fetch"],
+        "summary": "Detalhes completos de um álbum",
+        "description": "Retorna os detalhes completos de um álbum pelo UUID:\n- `album`: id, name, type, country, release_date, image_url, rate, mbid, **genres**, artists, musics (com duração e artistas por faixa)\n- `user_review`: review do usuário autenticado para este álbum (null se não autenticado ou ainda sem review)\n\nCom `force=true` re-busca os dados no MusicBrainz e atualiza o cache, incluindo gêneros via tags MB.\n",
+        "operationId": "getReleaseDetails",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "UUID do álbum",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Forçar re-busca no MusicBrainz ignorando cache",
+            "required": false,
+            "schema": { "type": "boolean", "default": false }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Álbum encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReleaseDetailsDTO" }
+              }
+            }
+          },
+          "400": {
+            "description": "ID inválido (não é UUID)",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          },
+          "404": {
+            "description": "Álbum não encontrado",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/fetch/album/{id}/tracks": {
+      "get": {
+        "tags": ["Fetch"],
+        "summary": "Faixas de um álbum",
+        "description": "Retorna a lista de faixas de um álbum. (Endpoint em desenvolvimento)",
+        "operationId": "getAlbumTracks",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "UUID do álbum",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de faixas do álbum",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/fetch/album/{id}/fetchImage": {
+      "get": {
+        "tags": ["Fetch"],
+        "summary": "Buscar imagem do álbum no MusicBrainz",
+        "description": "Consulta o MusicBrainz Cover Art Archive e retorna a URL da imagem de capa do álbum,\nsem baixar nem salvar nada. O cliente decide se quer confirmar o salvamento depois.\n",
+        "operationId": "fetchAlbumImage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "UUID do álbum",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "URL da imagem encontrada",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          },
+          "404": {
+            "description": "Álbum não encontrado ou sem imagem no MusicBrainz",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/artists/{id}/uploadImageUrl": {
+      "get": {
+        "tags": ["Artists"],
+        "summary": "URL de upload da imagem do artista",
+        "operationId": "getArtistUploadImageUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ImageUploadUrlDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/albums/{id}/uploadImageUrl": {
+      "get": {
+        "tags": ["Albums"],
+        "summary": "Obter URL de upload da imagem do álbum",
+        "operationId": "getAlbumtUploadImageUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ImageUploadUrlDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/activity/user/{userId}": {
+      "get": {
+        "tags": ["Activity"],
+        "summary": "Atividades de um usuário específico",
+        "description": "Lista as atividades (reviews, shares, etc.) de um usuário com paginação.",
+        "operationId": "getUserActivities",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "UUID do usuário",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 0 }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 20 }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserActivitiesDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/activity/feed": {
+      "get": {
+        "tags": ["Activity"],
+        "summary": "Feed de atividades dos usuários seguidos",
+        "description": "Retorna atividades recentes dos usuários que o usuário autenticado segue, com paginação por cursor.",
+        "operationId": "getActivityFeed",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 20 }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FeedResponseDTO" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": ["health-controller"],
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    },
+    "/reviews/comments/{commentId}": {
+      "delete": {
+        "tags": ["Reviews"],
+        "summary": "Deletar comentário",
+        "operationId": "deleteComment",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
+    "/listenlist/{itemId}": {
+      "delete": {
+        "tags": ["Listen List"],
+        "summary": "Remover item da lista",
+        "operationId": "removeItem",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removido com sucesso",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AlbumInfoDTO": {
+        "type": "object",
+        "description": "Resumo de um álbum retornado em listagens e buscas",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID do álbum",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do álbum",
+            "example": "OK Computer"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo: ALBUM, SINGLE, EP",
+            "example": "ALBUM"
+          },
+          "country": {
+            "type": "string",
+            "description": "País de lançamento",
+            "example": "GB"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "description": "Média de avaliações (0–10)",
+            "example": 8.5
+          },
+          "mbid": {
+            "type": "string",
+            "description": "MusicBrainz ID",
+            "example": "b84ee12a-09ef-421b-82de-0441a926375b"
+          },
+          "artists": {
+            "type": "array",
+            "description": "Artistas do álbum",
+            "items": { "$ref": "#/components/schemas/ArtistInfoDTO" },
+            "uniqueItems": true
+          },
+          "genres": {
+            "type": "array",
+            "description": "Gêneros musicais do álbum",
+            "example": ["Rock", "Alternative Rock"],
+            "items": { "type": "string" },
+            "uniqueItems": true
+          },
+          "_links": { "$ref": "#/components/schemas/Links" },
+          "release_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de lançamento"
+          },
+          "spotify_url": {
+            "type": "string",
+            "description": "URL do álbum no Spotify"
+          },
+          "image_url": {
+            "type": "string",
+            "description": "URL da capa do álbum"
+          }
+        }
+      },
+      "ArtistInfoDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "mbid": { "type": "string" },
+          "country": { "type": "string" },
+          "image_url": { "type": "string" }
+        }
+      },
+      "UserLoginOutDTO": {
+        "type": "object",
+        "description": "Dados do usuário retornados no login e em /users/me",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "username": { "type": "string" },
+          "email": { "type": "string" },
+          "image_url": { "type": "string" },
+          "followers_count": { "type": "integer", "format": "int32" },
+          "following_count": { "type": "integer", "format": "int32" },
+          "email_validated": { "type": "boolean" },
+          "spotify_linked": {
+            "type": "boolean",
+            "description": "Indica se o usuário tem conta Spotify vinculada"
+          },
+          "bio": { "type": "string" },
+          "pinned_albums": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AlbumInfoDTO" }
+          }
+        }
+      },
+      "UserUpdateDTO": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "username": { "type": "string" },
+          "bio": { "type": "string" }
+        }
+      },
+      "ReviewDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user": { "$ref": "#/components/schemas/UserInfoDTO" },
+          "content": { "type": "string" },
+          "album": { "$ref": "#/components/schemas/AlbumInfoDTO" },
+          "albumScore": { "type": "integer", "format": "int32" },
+          "trackScores": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TrackScoreDTO" }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TrackScoreDTO": {
+        "type": "object",
+        "properties": {
+          "trackId": { "type": "string", "format": "uuid" },
+          "trackNumber": { "type": "integer", "format": "int32" },
+          "trackName": { "type": "string" },
+          "score": { "type": "integer", "format": "int32" },
+          "feeling": {
+            "type": "string",
+            "enum": [
+              "EUPHORIC",
+              "ENERGIZED",
+              "EMPOWERED",
+              "HAPPY",
+              "NOSTALGIC",
+              "INSPIRED",
+              "IN_LOVE",
+              "HOPEFUL",
+              "CALM",
+              "FOCUSED",
+              "DREAMY",
+              "INDIFFERENT",
+              "SKIPPED",
+              "MELANCHOLIC",
+              "ANXIOUS",
+              "TENSE",
+              "LONELY",
+              "DEVASTATED",
+              "ANGRY",
+              "BORED"
+            ]
+          }
+        }
+      },
+      "UserInfoDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "username": { "type": "string" },
+          "name": { "type": "string" },
+          "imageUrl": { "type": "string" }
+        }
+      },
+      "UpdateReviewRequest": {
+        "type": "object",
+        "properties": { "content": { "type": "string" } }
+      },
+      "MusicInfoDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "length": { "type": "integer", "format": "int32" },
+          "mbid": { "type": "string" },
+          "album": { "$ref": "#/components/schemas/AlbumInfoDTO" },
+          "position": { "type": "integer", "format": "int32" },
+          "artists": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ArtistInfoDTO" }
+          }
+        }
+      },
+      "MusicShareDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user": { "$ref": "#/components/schemas/UserInfoDTO" },
+          "album": { "$ref": "#/components/schemas/AlbumInfoDTO" },
+          "music": { "$ref": "#/components/schemas/MusicInfoDTO" },
+          "artist": { "$ref": "#/components/schemas/ArtistInfoDTO" },
+          "comment": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UpdateMusicShareRequest": {
+        "type": "object",
+        "properties": { "comment": { "type": "string" } }
+      },
+      "ArtistDetailsDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "mbid": { "type": "string" },
+          "country": { "type": "string" },
+          "description": { "type": "string" },
+          "albums": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AlbumInfoDTO" }
+          },
+          "image_url": { "type": "string" },
+          "born_date": { "type": "string", "format": "date" },
+          "death_date": { "type": "string", "format": "date" }
+        }
+      },
+      "CreateArtistDTO": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "country": { "type": "string" },
+          "born_date": { "type": "string", "format": "date" },
+          "death_date": { "type": "string", "format": "date" },
+          "image_url": { "type": "string" }
+        }
+      },
+      "CreateAlbumDTO": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "country": { "type": "string" },
+          "musics": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CreateMusicDTO" }
+          },
+          "artistIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          },
+          "genres": { "type": "array", "items": { "type": "string" } },
+          "release_date": { "type": "string" },
+          "image_url": { "type": "string" },
+          "spotify_url": { "type": "string" }
+        }
+      },
+      "CreateMusicDTO": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "length": { "type": "integer", "format": "int32" },
+          "position": { "type": "integer", "format": "int32" },
+          "artistIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "CreateReviewRequest": {
+        "type": "object",
+        "properties": {
+          "albumId": { "type": "string", "format": "uuid" },
+          "content": { "type": "string" },
+          "albumScore": { "type": "integer", "format": "int32" },
+          "trackScores": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TrackScoreDTO" }
+          }
+        }
+      },
+      "ReviewCommentDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user": { "$ref": "#/components/schemas/UserInfoDTO" },
+          "content": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateCommentRequest": {
+        "type": "object",
+        "properties": { "content": { "type": "string" } }
+      },
+      "CreateMusicShareRequest": {
+        "type": "object",
+        "properties": {
+          "itemId": { "type": "string", "format": "uuid" },
+          "comment": { "type": "string" }
+        }
+      },
+      "ListenListItemDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "album": { "$ref": "#/components/schemas/AlbumInfoDTO" },
+          "artist": { "$ref": "#/components/schemas/ArtistInfoDTO" },
+          "music": { "$ref": "#/components/schemas/MusicInfoDTO" },
+          "itemType": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ListenListInputDTO": {
+        "type": "object",
+        "properties": { "itemId": { "type": "string", "format": "uuid" } }
+      },
+      "ValidateCodeDTO": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "email": { "type": "string" }
+        }
+      },
+      "RequestRecoverPasswordDTO": {
+        "type": "object",
+        "properties": { "email": { "type": "string" } }
+      },
+      "ResendCodeInDTO": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "context": { "type": "string" }
+        }
+      },
+      "UserDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "username": { "type": "string" },
+          "image_url": { "type": "string" },
+          "followers_count": { "type": "integer", "format": "int32" },
+          "following_count": { "type": "integer", "format": "int32" },
+          "is_following": { "type": "boolean" },
+          "bio": { "type": "string" },
+          "pinned_albums": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AlbumInfoDTO" }
+          }
+        }
+      },
+      "UserRegisterDTO": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "username": { "type": "string", "minLength": 1 },
+          "password": {
+            "type": "string",
+            "maxLength": 2147483647,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$"
+          }
+        },
+        "required": ["email", "name", "password", "username"]
+      },
+      "RefreshTokenOutput": {
+        "type": "object",
+        "properties": {
+          "access_token": { "$ref": "#/components/schemas/Token" }
+        }
+      },
+      "Token": {
+        "type": "object",
+        "properties": {
+          "value": { "type": "string" },
+          "expire_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RefreshTokenInput": {
+        "type": "object",
+        "properties": { "refreshToken": { "type": "string" } }
+      },
+      "TokenResponseDTO": {
+        "type": "object",
+        "description": "Resposta do refresh token. No cliente web o `refresh_token` é `null` pois é devolvido via cookie HttpOnly. No mobile é retornado no body.",
+        "properties": {
+          "access_token": {
+            "$ref": "#/components/schemas/Token",
+            "description": "Novo access token JWT"
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Tipo do token",
+            "example": "bearer"
+          },
+          "refresh_token": {
+            "$ref": "#/components/schemas/Token",
+            "description": "Novo refresh token. Presente apenas para clientes mobile (X-Client-Type: mobile). Para web é enviado via cookie HttpOnly."
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserLoginOutDTO",
+            "description": "Dados do usuário autenticado"
+          }
+        }
+      },
+      "UserLoginDTO": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "minLength": 1 },
+          "password": { "type": "string", "minLength": 1 }
+        },
+        "required": ["email", "password"]
+      },
+      "AuthResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["SUCCESS", "MFA_REQUIRED", "FAILURE"]
+          },
+          "user": { "$ref": "#/components/schemas/UserLoginOutDTO" },
+          "context_info": { "type": "string" },
+          "access_token": { "$ref": "#/components/schemas/Token" },
+          "refresh_token": { "$ref": "#/components/schemas/Token" },
+          "message": { "type": "string" }
+        }
+      },
+      "SpotifyCode": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "redirect_uri": { "type": "string" },
+          "code_verifier": { "type": "string" }
+        }
+      },
+      "GoogleCode": {
+        "type": "object",
+        "properties": { "id_token": { "type": "string" } }
+      },
+      "RequestChangePassword": {
+        "type": "object",
+        "properties": {
+          "newPassword": { "type": "string" },
+          "token": { "type": "string" }
+        }
+      },
+      "AlbumDetailsDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "country": { "type": "string" },
+          "rate": { "type": "number", "format": "double" },
+          "mbid": { "type": "string" },
+          "musics": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MusicSummaryDTO" }
+          },
+          "artists": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ArtistInfoDTO" },
+            "uniqueItems": true
+          },
+          "genres": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          },
+          "release_date": { "type": "string", "format": "date-time" },
+          "image_url": { "type": "string" }
+        }
+      },
+      "MusicSummaryDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "length": { "type": "integer", "format": "int32" },
+          "mbid": { "type": "string" },
+          "position": { "type": "integer", "format": "int32" },
+          "artists": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ArtistInfoDTO" }
+          }
+        }
+      },
+      "ConfirmImageDTO": {
+        "type": "object",
+        "properties": { "key": { "type": "string" } }
+      },
+      "ImageUploadUrlDTO": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "path": { "type": "string" }
+        }
+      },
+      "ArtistItem": {
+        "type": "object",
+        "description": "Artista simplificado",
+        "properties": {
+          "id": { "type": "string", "description": "ID do artista no Spotify" },
+          "name": { "type": "string", "description": "Nome do artista" }
+        }
+      },
+      "ImageItem": {
+        "type": "object",
+        "description": "Imagem do álbum",
+        "properties": {
+          "url": { "type": "string", "description": "URL da imagem" },
+          "height": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Altura em pixels",
+            "example": 640
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Largura em pixels",
+            "example": 640
+          }
+        }
+      },
+      "TopAlbumDTO": {
+        "type": "object",
+        "description": "Álbum mais ouvido na última semana",
+        "properties": {
+          "id": { "type": "string", "description": "ID do álbum no Spotify" },
+          "name": { "type": "string", "description": "Nome do álbum" },
+          "releaseDate": {
+            "type": "string",
+            "description": "Data de lançamento",
+            "example": "2024-01-01"
+          },
+          "images": {
+            "type": "array",
+            "description": "Imagens do álbum",
+            "items": { "$ref": "#/components/schemas/ImageItem" }
+          },
+          "artists": {
+            "type": "array",
+            "description": "Artistas do álbum",
+            "items": { "$ref": "#/components/schemas/ArtistItem" }
+          },
+          "playCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Número de plays na última semana",
+            "example": 5
+          }
+        }
+      },
+      "AlbumItem": {
+        "type": "object",
+        "description": "Álbum simplificado",
+        "properties": {
+          "id": { "type": "string", "description": "ID do álbum no Spotify" },
+          "name": { "type": "string", "description": "Nome do álbum" },
+          "images": {
+            "type": "array",
+            "description": "Imagens do álbum",
+            "items": { "$ref": "#/components/schemas/ImageItem" }
+          },
+          "artists": {
+            "type": "array",
+            "description": "Artistas do álbum",
+            "items": { "$ref": "#/components/schemas/ArtistItem" }
+          },
+          "release_date": {
+            "type": "string",
+            "description": "Data de lançamento",
+            "example": "2024-01-01"
+          }
+        }
+      },
+      "Cursors": {
+        "type": "object",
+        "description": "Cursores para paginação baseada em cursor",
+        "properties": {
+          "after": {
+            "type": "string",
+            "description": "Cursor para buscar itens após este timestamp",
+            "example": 1234567890
+          },
+          "before": {
+            "type": "string",
+            "description": "Cursor para buscar itens antes deste timestamp",
+            "example": 9876543210
+          }
+        }
+      },
+      "PlayHistoryItem": {
+        "type": "object",
+        "description": "Item do histórico de reprodução",
+        "properties": {
+          "track": {
+            "$ref": "#/components/schemas/TrackItem",
+            "description": "Dados da faixa"
+          },
+          "played_at": {
+            "type": "string",
+            "description": "Data/hora que a música foi tocada",
+            "example": "2026-02-20T21:00:00Z"
+          }
+        }
+      },
+      "RecentlyPlayedResponse": {
+        "type": "object",
+        "description": "Resposta do endpoint de músicas recentemente tocadas no Spotify",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Lista de faixas tocadas recentemente",
+            "items": { "$ref": "#/components/schemas/PlayHistoryItem" }
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Limite de itens retornados",
+            "example": 20
+          },
+          "cursors": {
+            "$ref": "#/components/schemas/Cursors",
+            "description": "Cursores para paginação"
+          }
+        }
+      },
+      "TrackItem": {
+        "type": "object",
+        "description": "Faixa do Spotify",
+        "properties": {
+          "id": { "type": "string", "description": "ID da faixa no Spotify" },
+          "name": { "type": "string", "description": "Nome da faixa" },
+          "album": {
+            "$ref": "#/components/schemas/AlbumItem",
+            "description": "Álbum da faixa"
+          },
+          "artists": {
+            "type": "array",
+            "description": "Artistas da faixa",
+            "items": { "$ref": "#/components/schemas/ArtistItem" }
+          }
+        }
+      },
+      "FullReviewDTO": {
+        "type": "object",
+        "properties": {
+          "review": { "$ref": "#/components/schemas/ReviewDTO" },
+          "likeCount": { "type": "integer", "format": "int64" },
+          "likedByCurrentUser": { "type": "boolean" },
+          "commentCount": { "type": "integer", "format": "int32" }
+        }
+      },
+      "TrackEmotionPointDTO": {
+        "type": "object",
+        "description": "Ponto emocional de uma faixa no gráfico de sentimentos do álbum",
+        "properties": {
+          "trackNumber": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Posição da faixa no álbum (1-based)",
+            "example": 3
+          },
+          "trackName": {
+            "type": "string",
+            "description": "Nome da faixa",
+            "example": "Exit Music (For a Film)"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nota numérica (0-100), presente se o usuário usou score em vez de feeling",
+            "example": 85
+          },
+          "feeling": {
+            "type": "string",
+            "description": "Sentimento selecionado pelo usuário para esta faixa",
+            "enum": [
+              "EUPHORIC",
+              "ENERGIZED",
+              "EMPOWERED",
+              "HAPPY",
+              "NOSTALGIC",
+              "INSPIRED",
+              "IN_LOVE",
+              "HOPEFUL",
+              "CALM",
+              "FOCUSED",
+              "DREAMY",
+              "INDIFFERENT",
+              "SKIPPED",
+              "MELANCHOLIC",
+              "ANXIOUS",
+              "TENSE",
+              "LONELY",
+              "DEVASTATED",
+              "ANGRY",
+              "BORED"
+            ]
+          },
+          "intensity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Intensidade emocional calculada: -2 (muito negativo) a +2 (muito positivo). Null quando apenas score foi informado.",
+            "example": 1
+          }
+        }
+      },
+      "FeelingOptionDTO": {
+        "type": "object",
+        "properties": {
+          "value": { "type": "string" },
+          "label": { "type": "string" },
+          "emoji": { "type": "string" },
+          "intensity": { "type": "integer", "format": "int32" },
+          "category": { "type": "string" }
+        }
+      },
+      "FullReviewInfoDTO": {
+        "type": "object",
+        "properties": {
+          "review": { "$ref": "#/components/schemas/ReviewInfoDTO" },
+          "likeCount": { "type": "integer", "format": "int64" },
+          "likedByCurrentUser": { "type": "boolean" },
+          "commentCount": { "type": "integer", "format": "int32" }
+        }
+      },
+      "ReviewInfoDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user": { "$ref": "#/components/schemas/UserInfoDTO" },
+          "content": { "type": "string" },
+          "album": { "$ref": "#/components/schemas/AlbumInfoDTO" },
+          "albumScore": { "type": "integer", "format": "int32" },
+          "trackScores": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TrackScoreDTO" }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FetchResult": {
+        "type": "object",
+        "description": "Resultado paginado de uma busca",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Lista de resultados",
+            "items": {}
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo da busca: album, artist ou music",
+            "example": "album"
+          }
+        }
+      },
+      "ErrorDTO": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "status_code": { "type": "integer", "format": "int32" },
+          "status_message": { "type": "string" },
+          "message": { "type": "string" },
+          "uri": { "type": "string" }
+        }
+      },
+      "AlbumEmotionChartDTO": {
+        "type": "object",
+        "description": "Gráfico emocional agregado de todas as reviews de um álbum",
+        "properties": {
+          "totalReviewsWithFeelings": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total de reviews que possuem pelo menos um sentimento por faixa"
+          },
+          "tracks": {
+            "type": "array",
+            "description": "Pontos por faixa com média de intensidade e sentimento dominante",
+            "items": { "$ref": "#/components/schemas/TrackEmotionAggregateDTO" }
+          }
+        }
+      },
+      "AlbumSummary": {
+        "type": "object",
+        "properties": {
+          "mbid": { "type": "string" },
+          "releaseDate": { "type": "string", "format": "date-time" },
+          "rate": { "type": "number", "format": "double" },
+          "artists": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ArtistSummary" },
+            "uniqueItems": true
+          },
+          "spotifyUrl": { "type": "string" },
+          "name": { "type": "string" },
+          "id": { "type": "string", "format": "uuid" },
+          "type": { "type": "string" },
+          "country": { "type": "string" }
+        }
+      },
+      "ArtistSummary": {
+        "type": "object",
+        "properties": {
+          "mbid": { "type": "string" },
+          "imageUrl": { "type": "string" },
+          "name": { "type": "string" },
+          "id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "ReleaseDetailsDTO": {
+        "type": "object",
+        "description": "Detalhes completos de um álbum, opcionalmente com a review do usuário autenticado",
+        "properties": {
+          "album": {
+            "$ref": "#/components/schemas/AlbumDetailsDTO",
+            "description": "Dados detalhados do álbum"
+          },
+          "userReview": {
+            "$ref": "#/components/schemas/ReviewProjection",
+            "description": "Review do usuário autenticado para este álbum (null se não autenticado ou sem review)"
+          },
+          "emotionChart": {
+            "$ref": "#/components/schemas/AlbumEmotionChartDTO",
+            "description": "Gráfico emocional agregado de todas as reviews do álbum"
+          },
+          "spotify_url": { "type": "string" }
+        }
+      },
+      "ReviewProjection": {
+        "type": "object",
+        "properties": {
+          "likeCount": { "type": "integer", "format": "int64" },
+          "album": { "$ref": "#/components/schemas/AlbumSummary" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "albumScore": { "type": "integer", "format": "int32" },
+          "user": { "$ref": "#/components/schemas/UserSummary" },
+          "likedByCurrentUser": { "type": "boolean" },
+          "commentCount": { "type": "integer", "format": "int32" },
+          "id": { "type": "string", "format": "uuid" },
+          "content": { "type": "string" }
+        }
+      },
+      "TrackEmotionAggregateDTO": {
+        "type": "object",
+        "description": "Dados emocionais agregados de uma faixa",
+        "properties": {
+          "trackNumber": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Posição da faixa no álbum (1-based)",
+            "example": 3
+          },
+          "trackName": {
+            "type": "string",
+            "description": "Nome da faixa",
+            "example": "Exit Music (For a Film)"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Quantidade de avaliações com sentimento para esta faixa"
+          },
+          "averageIntensity": {
+            "type": "number",
+            "format": "double",
+            "description": "Média de intensidade emocional (-2.0 a +2.0)",
+            "example": 0.75
+          },
+          "dominantFeeling": {
+            "type": "string",
+            "description": "Sentimento mais marcado pelos usuários nesta faixa",
+            "enum": [
+              "EUPHORIC",
+              "ENERGIZED",
+              "EMPOWERED",
+              "HAPPY",
+              "NOSTALGIC",
+              "INSPIRED",
+              "IN_LOVE",
+              "HOPEFUL",
+              "CALM",
+              "FOCUSED",
+              "DREAMY",
+              "INDIFFERENT",
+              "SKIPPED",
+              "MELANCHOLIC",
+              "ANXIOUS",
+              "TENSE",
+              "LONELY",
+              "DEVASTATED",
+              "ANGRY",
+              "BORED"
+            ]
+          },
+          "feelingDistribution": {
+            "type": "object",
+            "additionalProperties": { "type": "integer", "format": "int64" },
+            "description": "Distribuição de sentimentos: { 'HAPPY': 5, 'MELANCHOLIC': 3, ... }"
+          }
+        }
+      },
+      "UserSummary": {
+        "type": "object",
+        "properties": {
+          "username": { "type": "string" },
+          "name": { "type": "string" },
+          "id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "UserActivitiesDTO": {
+        "type": "object",
+        "properties": {
+          "reviews": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FullReviewInfoDTO" }
+          },
+          "music_shares": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MusicShareDTO" }
+          }
+        }
+      },
+      "ActivityItemDTO": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "review": { "$ref": "#/components/schemas/FullReviewInfoDTO" },
+          "musicShare": { "$ref": "#/components/schemas/MusicShareDTO" }
+        }
+      },
+      "FeedResponseDTO": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ActivityItemDTO" }
+          },
+          "nextCursor": { "type": "string" },
+          "hasMore": { "type": "boolean" }
+        }
+      },
+      "Link": {
+        "type": "object",
+        "properties": {
+          "href": { "type": "string" },
+          "hreflang": { "type": "string" },
+          "title": { "type": "string" },
+          "type": { "type": "string" },
+          "deprecation": { "type": "string" },
+          "profile": { "type": "string" },
+          "name": { "type": "string" },
+          "templated": { "type": "boolean" }
+        }
+      },
+      "Links": {
+        "type": "object",
+        "additionalProperties": { "$ref": "#/components/schemas/Link" }
+      }
+    }
+  }
+}

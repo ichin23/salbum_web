@@ -24,6 +24,14 @@ export function fetchArtistDetails(id: string, force = false): Promise<FetchArti
     return apiRequest<FetchArtistDetailsResponse>(`/artists/${id}${query}`)
 }
 
+export function syncArtist(id: string): Promise<void> {
+    return apiRequest<void>(`/artists/${id}/sync`, { method: 'POST' })
+}
+
+export function syncAlbum(id: string): Promise<void> {
+    return apiRequest<void>(`/albums/${id}/sync`, { method: 'PUT' })
+}
+
 export function fetchAlbumImage(albumId: string): Promise<{ imageUrl: string }> {
     return apiRequest<{ imageUrl: string }>(`/fetch/album/${albumId}/fetchImage`)
 }

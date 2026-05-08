@@ -48,3 +48,8 @@ export function followUser(id: string): Promise<void> {
 export function unfollowUser(id: string): Promise<void> {
     return apiRequest<void>(`/users/${id}/follow`, { method: 'DELETE' })
 }
+
+/** PUT /users/me/pinned-albums — atualiza álbuns favoritos do usuário autenticado */
+export function updatePinnedAlbums(albumIds: string[]): Promise<AuthUser> {
+    return apiRequest<AuthUser>('/users/me/pinned-albums', { method: 'PUT', body: albumIds })
+}

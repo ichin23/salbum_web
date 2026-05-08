@@ -14,8 +14,9 @@ import {
   Loader2,
   AlertCircle,
   Pencil,
+  RefreshCw,
 } from "lucide-vue-next";
-import { fetchReleaseDetails } from "../services/fetchService";
+import { fetchReleaseDetails, syncAlbum } from "../services/fetchService";
 import { getAlbumReviews } from "../services/reviewService";
 import type { FetchAlbumDetails, FullReviewDTO, ReviewDTO } from "../types";
 import AppImage from "../components/AppImage.vue";
@@ -99,6 +100,26 @@ function onShared(comment: string) {
   shareTarget.value = null;
 }
 
+const isSyncing = ref(false);
+const syncMessage = ref<string | null>(null);
+
+async function handleSyncAlbum() {
+  if (!album.value || isSyncing.value) return;
+  isSyncing.value = true;
+  syncMessage.value = null;
+  try {
+    await syncAlbum(album.value.id);
+    syncMessage.value = "Em breve o álbum será atualizado.";
+  } catch (e) {
+    syncMessage.value = "Erro ao sincronizar.";
+  } finally {
+    isSyncing.value = false;
+    setTimeout(() => {
+      syncMessage.value = null;
+    }, 5000);
+  }
+}
+
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 type TabKey = "all" | "comment" | "rating" | "music-by-music";
 const activeTab = ref<TabKey>("all");
@@ -147,6 +168,25 @@ const artistNames = computed(
 );
 
 const firstArtistId = computed(() => album.value?.artists[0]?.id ?? null);
+
+const sortedDiscs = computed(() => {
+  if (!album.value) return [];
+  if (album.value.discs && Object.keys(album.value.discs).length > 0) {
+    const keys = Object.keys(album.value.discs).sort((a, b) => Number(a) - Number(b));
+    return keys.map(key => ({
+      discNumber: key,
+      tracks: album.value!.discs![key]
+    }));
+  }
+  // Fallback
+  if (album.value.musics && album.value.musics.length > 0) {
+    return [{
+      discNumber: '1',
+      tracks: album.value.musics
+    }];
+  }
+  return [];
+});
 </script>
 
 <template>
@@ -299,7 +339,20 @@ const firstArtistId = computed(() => album.value?.artists[0]?.id ?? null);
                 >
                   Escrever review
                 </RouterLink>
+                <button
+                  @click="handleSyncAlbum"
+                  :disabled="isSyncing"
+                  class="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium bg-[var(--color-surface-2)] text-muted hover:text-white border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw :class="{'w-4 h-4': true, 'animate-spin': isSyncing}" />
+                  Sincronizar
+                </button>
               </div>
+            </div>
+            
+            <!-- Sync message -->
+            <div v-if="syncMessage" class="text-sm mt-2 text-primary font-medium" :class="{ 'text-red-400': syncMessage.includes('Erro') }">
+              {{ syncMessage }}
             </div>
           </div>
         </div>
@@ -312,62 +365,69 @@ const firstArtistId = computed(() => album.value?.artists[0]?.id ?? null);
       <AdBanner ad-slot="5135128051" format="horizontal" />
 
       <!-- Tracklist -->
-      <section v-if="album.musics.length">
+      <section v-if="sortedDiscs.length > 0">
         <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
           <Music class="w-5 h-5 text-primary" />
           Músicas
         </h2>
-        <div class="card overflow-hidden">
-          <div class="divide-y divide-[var(--color-border)]">
-            <div
-              v-for="music in album.musics"
-              :key="music.id"
-              class="flex items-center gap-4 px-5 py-3 hover:bg-[var(--color-surface-2)] transition-colors group"
-            >
-              <span
-                class="w-5 text-center text-xs text-muted font-mono flex-shrink-0"
-              >
-                {{ music.position }}
-              </span>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-white truncate">
-                  {{ music.name }}
-                </p>
-                <p class="text-xs text-muted truncate">
-                  {{ music.artists.map((a) => a.name).join(", ") }}
-                </p>
-              </div>
-              <div class="flex items-center gap-1 flex-shrink-0">
-                <span class="text-xs text-muted font-mono mr-2">{{
-                  formatDuration(music.length)
-                }}</span>
-                <button
-                  @click="
-                    hasMusic(music.id)
-                      ? removeMusic(music.id)
-                      : addMusic(music.id)
-                  "
-                  class="w-7 h-7 flex items-center justify-center rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                  :class="
-                    hasMusic(music.id)
-                      ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
-                      : 'text-muted hover:text-white hover:bg-[var(--color-surface)]'
-                  "
-                  :title="hasMusic(music.id) ? 'Na lista' : 'Quero ouvir'"
+        <div class="space-y-6">
+          <div v-for="disc in sortedDiscs" :key="disc.discNumber">
+            <h3 v-if="sortedDiscs.length > 1" class="text-md font-semibold text-white mb-3 ml-1">
+              Disco {{ disc.discNumber }}
+            </h3>
+            <div class="card overflow-hidden">
+              <div class="divide-y divide-[var(--color-border)]">
+                <div
+                  v-for="music in disc.tracks"
+                  :key="music.id"
+                  class="flex items-center gap-4 px-5 py-3 hover:bg-[var(--color-surface-2)] transition-colors group"
                 >
-                  <BookmarkCheck
-                    v-if="hasMusic(music.id)"
-                    class="w-3.5 h-3.5"
-                  />
-                  <BookmarkPlus v-else class="w-3.5 h-3.5" />
-                </button>
-                <button
-                  @click="shareTrack(music)"
-                  class="w-7 h-7 flex items-center justify-center rounded-lg text-muted hover:text-white hover:bg-[var(--color-surface)] transition-all opacity-0 group-hover:opacity-100"
-                  title="Compartilhar"
-                >
-                  <Share2 class="w-3.5 h-3.5" />
-                </button>
+                  <span
+                    class="w-5 text-center text-xs text-muted font-mono flex-shrink-0"
+                  >
+                    {{ music.position }}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white truncate">
+                      {{ music.name }}
+                    </p>
+                    <p class="text-xs text-muted truncate">
+                      {{ music.artists.map((a) => a.name).join(", ") }}
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-1 flex-shrink-0">
+                    <span class="text-xs text-muted font-mono mr-2">{{
+                      formatDuration(music.length)
+                    }}</span>
+                    <button
+                      @click="
+                        hasMusic(music.id)
+                          ? removeMusic(music.id)
+                          : addMusic(music.id)
+                      "
+                      class="w-7 h-7 flex items-center justify-center rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      :class="
+                        hasMusic(music.id)
+                          ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
+                          : 'text-muted hover:text-white hover:bg-[var(--color-surface)]'
+                      "
+                      :title="hasMusic(music.id) ? 'Na lista' : 'Quero ouvir'"
+                    >
+                      <BookmarkCheck
+                        v-if="hasMusic(music.id)"
+                        class="w-3.5 h-3.5"
+                      />
+                      <BookmarkPlus v-else class="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      @click="shareTrack(music)"
+                      class="w-7 h-7 flex items-center justify-center rounded-lg text-muted hover:text-white hover:bg-[var(--color-surface)] transition-all opacity-0 group-hover:opacity-100"
+                      title="Compartilhar"
+                    >
+                      <Share2 class="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

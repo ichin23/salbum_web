@@ -7,6 +7,7 @@ import type { ActivityItemDTO } from "../types";
 import FeedItemCard from "../components/FeedItem.vue";
 import AdBanner from "../components/AdBanner.vue";
 import AppImage from "../components/AppImage.vue";
+import PinnedAlbumsModal from "../components/profile/PinnedAlbumsModal.vue";
 import { useRouter } from "vue-router";
 
 const auth = useAuthStore();
@@ -38,6 +39,8 @@ const reviewCount = computed(
 const shareCount = computed(
   () => feedItems.value.filter((a) => a.type === "MUSIC_SHARE").length,
 );
+
+const isPinnedModalOpen = ref(false);
 
 onMounted(async () => {
   if (!auth.user?.id) {
@@ -154,6 +157,38 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
             </div>
           </div>
         </div>
+
+        <!-- Pinned Albums -->
+        <div class="mt-8 pt-6 border-t border-white/10 flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-semibold text-white">Álbuns favoritos</p>
+            <button
+              @click="isPinnedModalOpen = true"
+              class="text-xs font-medium text-primary hover:text-primary-hover transition-colors"
+            >
+              Editar favoritos
+            </button>
+          </div>
+          
+          <div v-if="auth.user?.pinned_albums?.length" class="flex flex-wrap gap-4 sm:gap-6">
+            <button
+              v-for="album in auth.user.pinned_albums"
+              :key="album.id"
+              @click="router.push({ name: 'album-detail', params: { id: album.id } })"
+              class="flex flex-col items-start gap-2 group text-left w-24 sm:w-28 md:w-32"
+            >
+              <div class="w-full aspect-square relative rounded-xl overflow-hidden shadow-lg transition-transform group-hover:-translate-y-1">
+                <AppImage :src="album.image_url" :alt="album.name" type="album" class="w-full h-full" />
+              </div>
+              <div class="w-full">
+                <p class="text-xs font-semibold text-white truncate">{{ album.name }}</p>
+              </div>
+            </button>
+          </div>
+          <div v-else class="text-xs text-muted/70 italic">
+            Nenhum álbum favorito definido.
+          </div>
+        </div>
       </div>
     </div>
 
@@ -239,5 +274,11 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
         </p>
       </div>
     </div>
+
+    <!-- Modals -->
+    <PinnedAlbumsModal
+      :is-open="isPinnedModalOpen"
+      @close="isPinnedModalOpen = false"
+    />
   </div>
 </template>
