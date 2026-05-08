@@ -2,7 +2,7 @@
 
 ## Phase 1: PWA Fundamentals
 - **Goal:** Make the application installable as a PWA with a valid manifest and basic offline shell.
-- **Status:** Not Started
+- **Status:** Completed
 
 ## Phase 2: Mobile UI & Fluidity
 - **Goal:** Enhance the mobile UX with app-like behaviors (transitions, touch interactions, safe areas).
