@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { BarChart2, BookOpen, Share2, Loader2, Pencil } from "lucide-vue-next";
+import { BarChart2, BookOpen, Share2, Loader2, Pencil, LogOut } from "lucide-vue-next";
 import { useAuthStore } from "../stores/auth";
 import { getUserActivityFeed } from "../services/activityService";
 import type { ActivityItemDTO } from "../types";
@@ -12,6 +12,11 @@ import { useRouter } from "vue-router";
 
 const auth = useAuthStore();
 const router = useRouter();
+
+function handleLogout() {
+  auth.logout();
+  router.replace({ name: "login" });
+}
 
 // ─── Feed state ───────────────────────────────────────────────────────────────
 const feedItems = ref<ActivityItemDTO[]>([]);
@@ -115,13 +120,23 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
                   {{ auth.user.bio }}
                 </p>
               </div>
-              <button
-                @click="router.push({ name: 'edit-profile' })"
-                class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border)] text-xs font-medium text-muted hover:border-primary hover:text-primary transition-colors mt-1"
-              >
-                <Pencil class="w-3.5 h-3.5" />
-                Editar
-              </button>
+              <div class="flex flex-col gap-2 mt-1">
+                <button
+                  @click="router.push({ name: 'edit-profile' })"
+                  class="flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border)] text-xs font-medium text-muted hover:border-primary hover:text-primary transition-colors"
+                >
+                  <Pencil class="w-3.5 h-3.5" />
+                  Editar
+                </button>
+                <button
+                  @click="handleLogout"
+                  class="flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/20 text-xs font-medium text-red-500 hover:bg-red-500/10 transition-colors lg:hidden"
+                  title="Sair"
+                >
+                  <LogOut class="w-3.5 h-3.5" />
+                  Sair
+                </button>
+              </div>
             </div>
 
             <!-- Stats -->
