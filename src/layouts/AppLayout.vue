@@ -23,9 +23,11 @@ const { isOnline } = useNetwork()
 
     <!-- Main content -->
     <main class="flex-1 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
-      <RouterView v-slot="{ Component }">
+      <RouterView v-slot="{ Component, route }">
         <Transition name="page" mode="out-in">
-          <component :is="Component" />
+          <div :key="route.fullPath" class="w-full min-h-full">
+            <component :is="Component" />
+          </div>
         </Transition>
       </RouterView>
     </main>
