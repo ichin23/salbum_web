@@ -94,7 +94,7 @@ async function sha256(plain: string): Promise<ArrayBuffer> {
         const hash = CryptoJS.SHA256(plain)
         const typedArray = new Uint8Array(hash.sigBytes)
         for (let i = 0; i < hash.sigBytes; i++) {
-            typedArray[i] = (hash.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff
+            typedArray[i] = ((hash as any).words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff
         }
         return typedArray.buffer
     }
