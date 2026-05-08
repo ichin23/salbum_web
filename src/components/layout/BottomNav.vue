@@ -10,7 +10,7 @@ const navItems = [
 </script>
 
 <template>
-  <nav class="fixed bottom-0 inset-x-0 z-40 bg-[var(--color-surface)] border-t border-[var(--color-border)] flex items-center justify-around px-2 py-2 safe-area-bottom">
+  <nav class="fixed bottom-0 inset-x-0 z-40 bg-[var(--color-surface)] border-t border-[var(--color-border)] flex items-center justify-around px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
     <RouterLink
       v-for="item in navItems"
       :key="item.route"
