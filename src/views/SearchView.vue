@@ -19,7 +19,7 @@ import { useAuthStore } from "../stores/auth";
 import type { FetchAlbum, FetchArtist, FetchMusicResult } from "../types";
 import type { UserDTO } from "../services/userService";
 import AppImage from "../components/AppImage.vue";
-import AdBanner from "../components/AdBanner.vue";
+
 
 const route = useRoute();
 const router = useRouter();
@@ -222,8 +222,7 @@ watch(
       </button>
     </div>
 
-    <!-- Anúncio -->
-    <AdBanner v-if="searched" ad-slot="6871027345" format="auto" />
+
 
     <!-- Skeleton loading: grid para álbuns/artistas -->
     <div

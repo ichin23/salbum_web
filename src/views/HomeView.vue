@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import { Activity, Loader2, Users } from "lucide-vue-next";
 import RecentlyPlayedSection from "../components/spotify/RecentlyPlayedSection.vue";
 import FeedItemCard from "../components/FeedItem.vue";
-import AdBanner from "../components/AdBanner.vue";
+
 import { getActivityFeed } from "../services/activityService";
 import { useAuthStore } from "../stores/auth";
 import type { ActivityItemDTO } from "../types";
@@ -65,8 +65,7 @@ async function loadMore() {
     <!-- Ouvido recentemente (Spotify) -->
     <RecentlyPlayedSection />
 
-    <!-- Anúncio -->
-    <AdBanner ad-slot="3123354022" format="auto" />
+
 
     <!-- Feed de atividades -->
     <section>

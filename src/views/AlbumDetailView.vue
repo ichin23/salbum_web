@@ -22,7 +22,7 @@ import type { FetchAlbumDetails, FullReviewDTO, ReviewDTO } from "../types";
 import AppImage from "../components/AppImage.vue";
 import MusicShareModal from "../components/share/MusicShareModal.vue";
 import ReviewCard from "../components/review/ReviewCard.vue";
-import AdBanner from "../components/AdBanner.vue";
+
 import type { ShareTarget } from "../components/share/MusicShareModal.vue";
 import { useListenList, fetchListenList } from "../composables/useListenList";
 
@@ -361,8 +361,7 @@ const sortedDiscs = computed(() => {
 
     <!-- Conteúdo -->
     <div class="px-4 sm:px-8 pb-12 space-y-8 sm:space-y-10">
-      <!-- Anúncio -->
-      <AdBanner ad-slot="5135128051" format="horizontal" />
+
 
       <!-- Tracklist -->
       <section v-if="sortedDiscs.length > 0">
