@@ -1,18 +1,12 @@
-# Requirements
+# Milestone v1.1 Requirements
 
-## Must Have
-- `manifest.json` with proper icons, name, theme colors, and display mode (standalone).
-- Service Worker registration for PWA installability.
-- Basic offline fallback page or caching for shell assets.
-- Fluid mobile UI (bottom navigation if applicable, swipe gestures, smooth transitions).
-- 100% Lighthouse PWA score.
+## Force Search Option
+- [ ] **SEARCH-01**: User can toggle a "force external search" option in the search view UI.
+- [ ] **SEARCH-02**: The search API calls (`/artists` and `/search`) send a `force=true` parameter when the option is enabled.
+- [ ] **SEARCH-03**: When adding a new artist (in Create/Edit album flow), the system automatically forces the external fetch to ensure accurate and complete data is retrieved.
 
-## Should Have
-- Cache API responses for read-only offline viewing (e.g., listen list, recent albums).
-- Pull-to-refresh implementation.
+## Future Requirements
+- Allow users to force-refresh an existing artist's profile data manually from their page (sync).
 
-## Could Have
-- Push notifications for new reviews or followers.
-
-## Won't Have
-- Native iOS/Android wrappers (Capacitor/React Native).
+## Out of Scope
+- Backend implementation (assumed to be handled separately or already supporting `force=true`).

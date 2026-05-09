@@ -1,13 +1,11 @@
-# Project Roadmap
+# Roadmap: Milestone v1.1 Force Artist Search Fetch
 
-## Phase 1: PWA Fundamentals
-- **Goal:** Make the application installable as a PWA with a valid manifest and basic offline shell.
-- **Status:** Completed
+## Phases
 
-## Phase 2: Mobile UI & Fluidity
-- **Goal:** Enhance the mobile UX with app-like behaviors (transitions, touch interactions, safe areas).
-- **Status:** Completed
-
-## Phase 3: Advanced Caching & Offline Support
-- **Goal:** Implement data caching strategies to allow partial offline functionality and faster load times.
-- **Status:** Completed
+### Phase 1: Frontend Search Enhancements
+- **Goal**: Implement the UI and API parameter logic to force an external artist search and bypass partial local matches.
+- **Requirements**: SEARCH-01, SEARCH-02, SEARCH-03
+- **Success Criteria**:
+  1. A "Force Search" toggle or button is visible in the search UI.
+  2. Search requests include `?force=true` when the user enables the option.
+  3. When an artist is added (Create/Edit album views), the search API call also includes the `force=true` parameter.

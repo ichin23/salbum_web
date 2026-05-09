@@ -36,7 +36,8 @@ export function getArtistUploadImageUrl(artistId: string): Promise<{ url: string
     return apiRequest<{ url: string; path: string }>(`/artists/${artistId}/uploadImageUrl`)
 }
 
-/** GET /artists?query=... */
-export function searchArtists(query: string): Promise<ArtistInfoDTO[]> {
-    return apiRequest<ArtistInfoDTO[]>(`/artists?query=${encodeURIComponent(query)}`)
+/** GET /artists?query=...&force=... */
+export function searchArtists(query: string, force?: boolean): Promise<ArtistInfoDTO[]> {
+    const url = `/artists?query=${encodeURIComponent(query)}${force ? '&force=true' : ''}`;
+    return apiRequest<ArtistInfoDTO[]>(url)
 }

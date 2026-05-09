@@ -66,6 +66,19 @@ function onArtistInput() {
   }, 350);
 }
 
+async function forceSearchArtist() {
+  if (!artistSearch.value.trim() || searchingArtists.value) return;
+  searchingArtists.value = true;
+  artistSearchOpen.value = true;
+  try {
+    artistResults.value = await searchArtists(artistSearch.value.trim(), true);
+  } catch {
+    artistResults.value = [];
+  } finally {
+    searchingArtists.value = false;
+  }
+}
+
 function addArtist(a: ArtistInfoDTO) {
   if (!selectedArtists.value.find((x) => x.id === a.id)) {
     selectedArtists.value.push(a);
@@ -390,14 +403,25 @@ async function submit() {
           <h2 class="text-sm font-semibold text-white">
             Artistas <span class="text-red-400">*</span>
           </h2>
-          <button
-            type="button"
-            @click="router.push({ name: 'create-artist' })"
-            class="flex items-center gap-1.5 text-xs text-muted hover:text-primary transition-colors"
-          >
-            <UserPlus class="w-3.5 h-3.5" />
-            Criar artista
-          </button>
+          <div class="flex items-center gap-4">
+            <button
+              type="button"
+              @click="forceSearchArtist"
+              class="flex items-center gap-1.5 text-xs text-muted hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="!artistSearch.trim() || searchingArtists"
+            >
+              <Search class="w-3.5 h-3.5" />
+              Forçar busca externa
+            </button>
+            <button
+              type="button"
+              @click="router.push({ name: 'create-artist' })"
+              class="flex items-center gap-1.5 text-xs text-muted hover:text-primary transition-colors"
+            >
+              <UserPlus class="w-3.5 h-3.5" />
+              Criar artista
+            </button>
+          </div>
         </div>
 
         <!-- Selected artists -->
@@ -482,8 +506,16 @@ async function submit() {
             Nenhum artista encontrado.
             <button
               type="button"
-              @mousedown="router.push({ name: 'create-artist' })"
+              @mousedown="forceSearchArtist"
               class="ml-1 text-primary hover:underline"
+            >
+              Forçar busca externa
+            </button>
+            <span class="mx-1">ou</span>
+            <button
+              type="button"
+              @mousedown="router.push({ name: 'create-artist' })"
+              class="text-primary hover:underline"
             >
               Criar novo
             </button>

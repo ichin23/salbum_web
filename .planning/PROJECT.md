@@ -12,6 +12,15 @@ Providing a native-like, fluid, and visually appealing experience on mobile devi
 - No PWA capabilities, caching, or offline support implemented yet.
 - See `.planning/codebase/` for detailed architectural state.
 
+## Current Milestone: v1.1 Force Artist Search Fetch
+
+**Goal:** Improve search accuracy by allowing forced fetch from external sources (MusicBrainz) to bypass partial local matches.
+
+**Target features:**
+- UI option to force search
+- API integration for force flag in search
+- Force fetch on new artist creation
+
 ## Requirements
 
 ### Validated

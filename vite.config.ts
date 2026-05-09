@@ -43,8 +43,8 @@ export default defineConfig({
         name: 'Salbum',
         short_name: 'Salbum',
         description: 'Music sharing and review application',
-        theme_color: '#1a1a1a',
-        background_color: '#1a1a1a',
+        theme_color: '#234ED8',
+        background_color: '#234ED8',
         display: 'standalone',
         icons: [
           {

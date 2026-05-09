@@ -47,7 +47,7 @@ onMounted(async () => {
       (data as { artist?: FetchArtistDetails }).artist ??
       (data as unknown as FetchArtistDetails);
 
-    if (artist.value?.mbid && artist.value?.albums && artist.value.albums.length < 5) {
+    if (artist.value?.mbid && artist.value?.albums && artist.value.albums.length <= 7) {
       handleSyncArtist();
     }
   } catch (e) {

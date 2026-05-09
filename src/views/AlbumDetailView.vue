@@ -253,13 +253,17 @@ const sortedDiscs = computed(() => {
             >
               {{ album.name }}
             </h1>
-            <RouterLink
-              v-if="firstArtistId"
-              :to="{ name: 'artist-detail', params: { id: firstArtistId } }"
-              class="text-lg text-muted font-medium hover:text-white transition-colors block"
-            >
-              {{ artistNames }}
-            </RouterLink>
+            <div v-if="album?.artists?.length" class="text-lg text-muted font-medium block">
+              <template v-for="(artist, index) in album.artists" :key="artist.id">
+                <RouterLink
+                  :to="{ name: 'artist-detail', params: { id: artist.id } }"
+                  class="hover:text-white transition-colors"
+                >
+                  {{ artist.name }}
+                </RouterLink>
+                <span v-if="index < album.artists.length - 1">, </span>
+              </template>
+            </div>
             <p v-else class="text-lg text-muted font-medium">
               {{ artistNames }}
             </p>
