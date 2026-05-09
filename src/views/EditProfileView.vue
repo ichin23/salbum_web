@@ -11,6 +11,9 @@ import {
 } from "lucide-vue-next";
 import { useAuthStore } from "../stores/auth";
 import AppImage from "../components/AppImage.vue";
+import ImageUploadButton from "../components/ImageUploadButton.vue";
+import { getUserUploadImageUrl } from "../services/userService";
+import { uploadImageToPresignedUrl } from "../services/albumService";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -23,6 +26,14 @@ const image_url = ref(auth.user?.image_url ?? "");
 const saving = ref(false);
 const success = ref(false);
 const error = ref<string | null>(null);
+
+async function handleProfileImageUpload(file: File): Promise<string> {
+  const { url, path } = await getUserUploadImageUrl();
+  await uploadImageToPresignedUrl(url, file);
+  await auth.updateProfileImage(path);
+  image_url.value = auth.user?.image_url || path;
+  return image_url.value;
+}
 
 async function save() {
   if (!name.value.trim()) {
@@ -98,22 +109,15 @@ async function save() {
 
       <!-- Form -->
       <form @submit.prevent="save" class="space-y-5">
-        <!-- Image URL -->
-        <div class="space-y-1.5">
-          <label
-            class="text-xs font-semibold text-muted uppercase tracking-wider"
-            >URL da foto de perfil</label
-          >
-          <input
-            v-model="image_url"
-            type="url"
-            placeholder="https://exemplo.com/foto.jpg"
-            class="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-4 py-3 text-sm text-white placeholder-muted focus:outline-none focus:border-primary transition-colors"
-          />
-          <p class="text-[11px] text-muted">
-            Cole o link de uma imagem pública
-          </p>
-        </div>
+        <!-- Image Upload -->
+        <ImageUploadButton
+          label="Foto de perfil"
+          :current-image-url="image_url"
+          :on-upload="handleProfileImageUpload"
+          size="md"
+          shape="rounded"
+          @uploaded="(url) => (image_url = url)"
+        />
 
         <!-- Name -->
         <div class="space-y-1.5">

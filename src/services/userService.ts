@@ -53,3 +53,13 @@ export function unfollowUser(id: string): Promise<void> {
 export function updatePinnedAlbums(albumIds: string[]): Promise<AuthUser> {
     return apiRequest<AuthUser>('/users/me/pinned-albums', { method: 'PUT', body: albumIds })
 }
+
+/** GET /users/me/profile-picture/upload-url */
+export function getUserUploadImageUrl(): Promise<{ url: string; path: string }> {
+    return apiRequest<{ url: string; path: string }>('/users/me/profile-picture/upload-url')
+}
+
+/** PATCH /users/me/profile-picture */
+export function confirmProfileImage(key: string): Promise<AuthUser> {
+    return apiRequest<AuthUser>('/users/me/profile-picture', { method: 'PATCH', body: { key } })
+}
