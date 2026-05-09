@@ -167,8 +167,6 @@ const artistNames = computed(
   () => album.value?.artists.map((a) => a.name).join(", ") ?? "",
 );
 
-const firstArtistId = computed(() => album.value?.artists[0]?.id ?? null);
-
 const sortedDiscs = computed(() => {
   if (!album.value) return [];
   if (album.value.discs && Object.keys(album.value.discs).length > 0) {
