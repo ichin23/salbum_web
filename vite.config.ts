@@ -75,11 +75,25 @@ export default defineConfig(({ mode }) => {
           ],
           screenshots: [
             {
-              src: 'screenshot.png',
-              sizes: '1080x1920',
+              src: 'home_screen.png',
+              sizes: '632x1280',
               type: 'image/png',
               form_factor: 'narrow',
               label: 'Salbum Home'
+            },
+            {
+              src: 'album_screen.png',
+              sizes: '632x1280',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Salbum Album Details'
+            },
+            {
+              src: 'profile_screen.png',
+              sizes: '632x1280',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Salbum Profile Screen'
             }
           ]
         }

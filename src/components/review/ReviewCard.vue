@@ -156,8 +156,11 @@ async function confirmDelete() {
   >
     <!-- Header -->
     <div class="flex items-start justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 flex-shrink-0">
+      <router-link
+        :to="{ name: 'user-profile', params: { id: review.user.id } }"
+        class="flex items-center gap-3 group cursor-pointer"
+      >
+        <div class="w-9 h-9 flex-shrink-0 transition-transform group-hover:scale-105">
           <AppImage
             :src="review.user.imageUrl"
             :alt="review.user.username"
@@ -168,12 +171,12 @@ async function confirmDelete() {
           />
         </div>
         <div>
-          <p class="text-sm font-semibold text-white">
+          <p class="text-sm font-semibold text-white group-hover:text-primary transition-colors">
             {{ review.user.username }}
           </p>
           <p class="text-xs text-muted">{{ formattedDate }}</p>
         </div>
-      </div>
+      </router-link>
 
       <div class="flex items-center gap-2 flex-shrink-0">
         <!-- Score badge -->

@@ -17,6 +17,7 @@ export interface UserDTO {
     following_count: number
     is_following: boolean
     bio: string | null
+    pinned_albums?: import('../types').AlbumInfoDTO[]
 }
 
 /** PUT /users/me — atualiza dados do perfil do usuário autenticado */

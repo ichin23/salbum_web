@@ -121,6 +121,13 @@ const artistNames = computed(
   () => album.value?.artists.map((a) => a.name).join(", ") ?? "",
 );
 
+function selectFeeling(trackId: string, feelingValue: string) {
+  trackFeelings[trackId] = feelingValue;
+  if (scoreMode.value === "feelings+score" && trackFeelingScores[trackId] === undefined) {
+    trackFeelingScores[trackId] = 50;
+  }
+}
+
 async function handleSubmit() {
   if (!canSubmit.value || !album.value) return;
   loading.value = true;
@@ -188,7 +195,7 @@ function buildPayload() {
         trackNumber: m.position,
         trackName: m.name,
         feeling: trackFeelings[m.id],
-        score: trackFeelingScores[m.id] ?? null,
+        score: trackFeelingScores[m.id] ?? 50,
       }));
     if (scores.length) {
       payload.trackScores = scores;
@@ -229,7 +236,7 @@ function buildPayload() {
     </button>
   </div>
 
-  <div v-else-if="album" class="min-h-full pb-24">
+  <div v-else-if="album" class="min-h-full pb-40 md:pb-24">
     <!-- Header -->
     <div
       class="sticky top-0 z-10 bg-dark/80 backdrop-blur-md border-b border-[var(--color-border)] px-6 py-4 flex items-center gap-4"
@@ -523,7 +530,7 @@ function buildPayload() {
                   <button
                     v-for="f in feelingsByCategory.positive"
                     :key="f.value"
-                    @click="trackFeelings[music.id] = f.value"
+                    @click="selectFeeling(music.id, f.value)"
                     class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
                     :class="
                       trackFeelings[music.id] === f.value
@@ -545,7 +552,7 @@ function buildPayload() {
                   <button
                     v-for="f in feelingsByCategory.neutral"
                     :key="f.value"
-                    @click="trackFeelings[music.id] = f.value"
+                    @click="selectFeeling(music.id, f.value)"
                     class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
                     :class="
                       trackFeelings[music.id] === f.value
@@ -567,7 +574,7 @@ function buildPayload() {
                   <button
                     v-for="f in feelingsByCategory.negative"
                     :key="f.value"
-                    @click="trackFeelings[music.id] = f.value"
+                    @click="selectFeeling(music.id, f.value)"
                     class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
                     :class="
                       trackFeelings[music.id] === f.value
@@ -589,18 +596,14 @@ function buildPayload() {
               <div class="flex items-center justify-between">
                 <span class="text-xs text-muted">Nota desta faixa</span>
                 <span
-                  class="text-sm font-bold tabular-nums"
-                  :class="
-                    (trackFeelingScores[music.id] ?? 0) > 0
-                      ? 'text-primary'
-                      : 'text-muted'
-                  "
+                  class="text-sm font-bold tabular-nums text-primary"
                 >
-                  {{ trackFeelingScores[music.id] ?? 0 }}
+                  {{ trackFeelingScores[music.id] ?? 50 }}
                 </span>
               </div>
               <input
-                v-model.number="trackFeelingScores[music.id]"
+                :value="trackFeelingScores[music.id] ?? 50"
+                @input="trackFeelingScores[music.id] = Number(($event.target as HTMLInputElement).value)"
                 type="range"
                 min="0"
                 max="100"
@@ -733,7 +736,7 @@ function buildPayload() {
                   <button
                     v-for="f in feelingsByCategory.positive"
                     :key="f.value"
-                    @click="trackFeelings[music.id] = f.value"
+                    @click="selectFeeling(music.id, f.value)"
                     class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
                     :class="
                       trackFeelings[music.id] === f.value
@@ -755,7 +758,7 @@ function buildPayload() {
                   <button
                     v-for="f in feelingsByCategory.neutral"
                     :key="f.value"
-                    @click="trackFeelings[music.id] = f.value"
+                    @click="selectFeeling(music.id, f.value)"
                     class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
                     :class="
                       trackFeelings[music.id] === f.value
@@ -777,7 +780,7 @@ function buildPayload() {
                   <button
                     v-for="f in feelingsByCategory.negative"
                     :key="f.value"
-                    @click="trackFeelings[music.id] = f.value"
+                    @click="selectFeeling(music.id, f.value)"
                     class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
                     :class="
                       trackFeelings[music.id] === f.value
@@ -797,7 +800,7 @@ function buildPayload() {
 
     <!-- Sticky footer -->
     <div
-      class="fixed bottom-0 left-0 md:left-16 lg:left-64 right-0 bg-dark/90 backdrop-blur-md border-t border-[var(--color-border)] px-4 sm:px-6 py-3 sm:py-4"
+      class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-0 left-0 md:left-16 lg:left-64 right-0 bg-dark/90 backdrop-blur-md border-t border-[var(--color-border)] px-4 sm:px-6 py-3 sm:py-4 z-20"
     >
       <div class="max-w-2xl mx-auto space-y-2">
         <p
