@@ -123,7 +123,10 @@ const artistNames = computed(
 
 function selectFeeling(trackId: string, feelingValue: string) {
   trackFeelings[trackId] = feelingValue;
-  if (scoreMode.value === "feelings+score" && trackFeelingScores[trackId] === undefined) {
+  if (
+    scoreMode.value === "feelings+score" &&
+    trackFeelingScores[trackId] === undefined
+  ) {
     trackFeelingScores[trackId] = 50;
   }
 }
@@ -595,15 +598,17 @@ function buildPayload() {
             >
               <div class="flex items-center justify-between">
                 <span class="text-xs text-muted">Nota desta faixa</span>
-                <span
-                  class="text-sm font-bold tabular-nums text-primary"
-                >
+                <span class="text-sm font-bold tabular-nums text-primary">
                   {{ trackFeelingScores[music.id] ?? 50 }}
                 </span>
               </div>
               <input
                 :value="trackFeelingScores[music.id] ?? 50"
-                @input="trackFeelingScores[music.id] = Number(($event.target as HTMLInputElement).value)"
+                @input="
+                  trackFeelingScores[music.id] = Number(
+                    ($event.target as HTMLInputElement).value,
+                  )
+                "
                 type="range"
                 min="0"
                 max="100"
@@ -823,9 +828,7 @@ function buildPayload() {
               faixas com sentimento
             </template>
             <template v-else-if="scoreMode === 'feelings+score'">
-              {{ Object.keys(trackFeelings).length }}/{{
-                album.musics.length
-              }}
+              {{ Object.keys(trackFeelings).length }}/{{ album.musics.length }}
               faixas ·
               {{
                 Object.values(trackFeelingScores).filter((s) => s > 0).length
