@@ -43,12 +43,15 @@ export default defineConfig(({ mode }) => {
           ]
         },
         manifest: {
+          id: '/?source=pwa',
           name: 'Salbum',
           short_name: 'Salbum',
           description: 'Music sharing and review application',
           theme_color: '#234ED8',
           background_color: '#234ED8',
           display: 'standalone',
+          start_url: '/?utm_source=pwa',
+          scope: '/',
           icons: [
             {
               src: 'pwa-192x192.png',
@@ -59,7 +62,24 @@ export default defineConfig(({ mode }) => {
               src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable'
+              purpose: 'maskable'
+            }
+          ],
+          shortcuts: [
+            {
+              name: 'Open Salbum',
+              short_name: 'Salbum',
+              url: '/',
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+            }
+          ],
+          screenshots: [
+            {
+              src: 'screenshot.png',
+              sizes: '1080x1920',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Salbum Home'
             }
           ]
         }

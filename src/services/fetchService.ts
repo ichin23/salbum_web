@@ -6,11 +6,13 @@ export function fetchSearch(params: {
     type?: 'album' | 'artist' | 'music'
     artist?: string
     force?: boolean
+    limit?: number
 }): Promise<FetchResult> {
     const query = new URLSearchParams({ q: params.q })
     if (params.type) query.set('type', params.type)
     if (params.artist) query.set('artist', params.artist)
     if (params.force) query.set('force', 'true')
+    if (params.limit) query.set('limit', String(params.limit))
     return apiRequest<FetchResult>(`/fetch?${query}`)
 }
 

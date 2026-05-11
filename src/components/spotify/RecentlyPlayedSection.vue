@@ -89,6 +89,7 @@ async function goToAlbum(album: TopAlbumDTO) {
       q: albumName,
       type: "album",
       artist: artistName,
+      limit: 1,
     });
     const albums = result.data as FetchAlbum[];
     const match = findMatch(albums, albumName, artistName);

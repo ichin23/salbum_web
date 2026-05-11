@@ -15,7 +15,7 @@ const emit = defineEmits<{
 }>();
 
 const auth = useAuthStore();
-const MAX_PINNED = 4;
+const MAX_PINNED = 3;
 
 // Inicializa a lista local com os álbuns que já estão favoritados
 const selectedAlbums = ref<AlbumInfoDTO[]>([...(auth.user?.pinned_albums || [])]);

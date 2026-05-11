@@ -406,7 +406,7 @@ const sortedDiscs = computed(() => {
                           ? removeMusic(music.id)
                           : addMusic(music.id)
                       "
-                      class="w-7 h-7 flex items-center justify-center rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      class="w-7 h-7 flex items-center justify-center rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
                       :class="
                         hasMusic(music.id)
                           ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
@@ -422,7 +422,7 @@ const sortedDiscs = computed(() => {
                     </button>
                     <button
                       @click="shareTrack(music)"
-                      class="w-7 h-7 flex items-center justify-center rounded-lg text-muted hover:text-white hover:bg-[var(--color-surface)] transition-all opacity-0 group-hover:opacity-100"
+                      class="w-7 h-7 flex items-center justify-center rounded-lg text-muted hover:text-white hover:bg-[var(--color-surface)] transition-all sm:opacity-0 sm:group-hover:opacity-100"
                       title="Compartilhar"
                     >
                       <Share2 class="w-3.5 h-3.5" />
