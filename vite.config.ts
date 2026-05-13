@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => {
           ]
         },
         manifest: {
-          id: '/?source=pwa',
+          id: '/app',
           name: 'Salbum',
           short_name: 'Salbum',
           description: 'Music sharing and review application',
@@ -56,7 +56,20 @@ export default defineConfig(({ mode }) => {
             {
               src: 'pwa-192x192.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable'
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any'
             },
             {
               src: 'pwa-512x512.png',
@@ -70,7 +83,14 @@ export default defineConfig(({ mode }) => {
               name: 'Open Salbum',
               short_name: 'Salbum',
               url: '/',
-              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+              icons: [
+                {
+                  src: 'pwa-192x192.png',
+                  sizes: '192x192',
+                  type: 'image/png',
+                  purpose: 'maskable'
+                }
+              ]
             }
           ],
           screenshots: [
