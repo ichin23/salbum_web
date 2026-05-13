@@ -1,7 +1,7 @@
 ---
-milestone: "v1.1"
-name: "Force Artist Search Fetch"
-status: "planning"
+milestone: "v1.2"
+name: "UI and State Fixes"
+status: "execution"
 progress:
   phases_total: 1
   phases_completed: 0

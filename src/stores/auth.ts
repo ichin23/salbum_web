@@ -163,6 +163,16 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem(USER_KEY, JSON.stringify(updated))
     }
 
+    async function refreshUser() {
+        const freshUser = await userService.getMe()
+        if (!freshUser.pinned_albums && user.value?.pinned_albums) {
+            freshUser.pinned_albums = user.value.pinned_albums;
+        }
+        user.value = freshUser
+        localStorage.setItem(USER_KEY, JSON.stringify(freshUser))
+    }
+
+
     function logout() {
         clearSession()
     }
@@ -187,6 +197,8 @@ export const useAuthStore = defineStore('auth', () => {
         updateProfile,
         updatePinnedAlbums,
         updateProfileImage,
+        refreshUser,
         logout,
+
     }
 })

@@ -12,14 +12,15 @@ Providing a native-like, fluid, and visually appealing experience on mobile devi
 - No PWA capabilities, caching, or offline support implemented yet.
 - See `.planning/codebase/` for detailed architectural state.
 
-## Current Milestone: v1.1 Force Artist Search Fetch
+## Current Milestone: v1.2 UI and State Fixes
 
-**Goal:** Improve search accuracy by allowing forced fetch from external sources (MusicBrainz) to bypass partial local matches.
+**Goal:** Fix stale data in profile, missing links in feed, and state reset in search.
 
 **Target features:**
-- UI option to force search
-- API integration for force flag in search
-- Force fetch on new artist creation
+- Refresh user data on profile load
+- Add profile links to feed items
+- Persist search type in URL
+
 
 ## Requirements
 

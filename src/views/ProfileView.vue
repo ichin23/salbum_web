@@ -53,6 +53,7 @@ onMounted(async () => {
     return;
   }
   try {
+    await auth.refreshUser();
     feedItems.value = await getUserActivityFeed(auth.user.id);
   } catch (e) {
     error.value =

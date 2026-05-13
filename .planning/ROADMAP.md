@@ -1,11 +1,12 @@
-# Roadmap: Milestone v1.1 Force Artist Search Fetch
+# Roadmap: Milestone v1.2 UI and State Fixes
 
 ## Phases
 
-### Phase 1: Frontend Search Enhancements
-- **Goal**: Implement the UI and API parameter logic to force an external artist search and bypass partial local matches.
-- **Requirements**: SEARCH-01, SEARCH-02, SEARCH-03
+### Phase 1: Implement Fixes
+- **Goal**: Resolve the 3 reported issues.
+- **Requirements**: PROFILE-01, FEED-01, SEARCH-01
 - **Success Criteria**:
-  1. A "Force Search" toggle or button is visible in the search UI.
-  2. Search requests include `?force=true` when the user enables the option.
-  3. When an artist is added (Create/Edit album views), the search API call also includes the `force=true` parameter.
+  1. Profile tab loads pinned albums reliably.
+  2. Feed items link to user profile.
+  3. Search state persists in URL.
+

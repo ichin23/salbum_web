@@ -193,24 +193,30 @@ async function confirmDelete() {
     @click.self="closeMenu"
   >
     <div class="flex items-center gap-2 min-w-0">
-      <div class="w-7 h-7 flex-shrink-0 aspect-square">
-        <AppImage
-          :src="user?.imageUrl ?? null"
-          :alt="user?.username ?? ''"
-          :initial="(user?.username?.[0] ?? '?').toUpperCase()"
-          type="artist"
-          rounded="full"
-          class="w-full h-full"
-        />
-      </div>
-      <div class="flex-1 min-w-0 overflow-hidden">
-        <p class="text-xs font-semibold text-white truncate leading-none">
-          {{ user?.name ?? user?.username }}
-        </p>
-        <p class="text-[11px] text-muted mt-0.5 leading-none truncate">
-          {{ formattedDate }}
-        </p>
-      </div>
+      <component
+        :is="user?.id ? RouterLink : 'div'"
+        v-bind="user?.id ? { to: { name: 'user-profile', params: { id: user.id } } } : {}"
+        class="flex items-center gap-2 min-w-0 group cursor-pointer"
+      >
+        <div class="w-7 h-7 flex-shrink-0 aspect-square">
+          <AppImage
+            :src="user?.imageUrl ?? null"
+            :alt="user?.username ?? ''"
+            :initial="(user?.username?.[0] ?? '?').toUpperCase()"
+            type="artist"
+            rounded="full"
+            class="w-full h-full transition-transform group-hover:scale-105"
+          />
+        </div>
+        <div class="flex-1 min-w-0 overflow-hidden">
+          <p class="text-xs font-semibold text-white truncate leading-none group-hover:text-primary transition-colors">
+            {{ user?.name ?? user?.username }}
+          </p>
+          <p class="text-[11px] text-muted mt-0.5 leading-none truncate">
+            {{ formattedDate }}
+          </p>
+        </div>
+      </component>
       <span
         class="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap"
         :class="

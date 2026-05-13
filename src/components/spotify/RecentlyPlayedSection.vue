@@ -11,9 +11,11 @@ import {
 } from "lucide-vue-next";
 import { getTopAlbumsLastWeek } from "../../services/spotifyService";
 import { fetchSearch } from "../../services/fetchService";
+import { useAuthStore } from "../../stores/auth";
 import type { TopAlbumDTO, FetchAlbum } from "../../types";
 
 const router = useRouter();
+const auth = useAuthStore();
 
 const items = ref<TopAlbumDTO[]>([]);
 const loading = ref(true);
@@ -31,6 +33,12 @@ interface NotFoundInfo {
 const notFound = ref<NotFoundInfo | null>(null);
 
 onMounted(async () => {
+  if (!auth.user?.spotify_linked) {
+    error.value = "Spotify não linkado";
+    loading.value = false;
+    return;
+  }
+
   try {
     items.value = await getTopAlbumsLastWeek();
   } catch (e) {

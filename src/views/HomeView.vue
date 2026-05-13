@@ -63,7 +63,7 @@ async function loadMore() {
     </div>
 
     <!-- Ouvido recentemente (Spotify) -->
-    <RecentlyPlayedSection />
+    <RecentlyPlayedSection v-if="auth.user?.spotify_linked" />
 
 
 

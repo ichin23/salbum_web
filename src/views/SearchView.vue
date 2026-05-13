@@ -10,11 +10,9 @@ import {
   Music,
   Plus,
   UserCheck,
-  UserPlus,
-  Loader2,
 } from "lucide-vue-next";
 import { fetchSearch } from "../services/fetchService";
-import { searchUsers, followUser, unfollowUser } from "../services/userService";
+import { searchUsers } from "../services/userService";
 import { useAuthStore } from "../stores/auth";
 import type { FetchAlbum, FetchArtist, FetchMusicResult } from "../types";
 import type { UserDTO } from "../services/userService";
@@ -26,7 +24,9 @@ const router = useRouter();
 const auth = useAuthStore();
 
 const query = ref((route.query.q as string) ?? "");
-const searchType = ref<"album" | "artist" | "music" | "user">("album");
+const searchType = ref<"album" | "artist" | "music" | "user">(
+  (route.query.type as any) ?? "album"
+);
 const albumResults = ref<FetchAlbum[]>([]);
 const artistResults = ref<FetchArtist[]>([]);
 const musicResults = ref<FetchMusicResult[]>([]);
@@ -34,27 +34,6 @@ const userResults = ref<UserDTO[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const searched = ref(false);
-
-// follow state: map userId -> 'loading' | true | false
-const followState = ref<Record<string, boolean | "loading">>({});
-
-async function toggleFollow(user: UserDTO) {
-  followState.value[user.id] = "loading";
-  try {
-    if (user.is_following) {
-      await unfollowUser(user.id);
-      user.is_following = false;
-      user.followers_count = Math.max(0, user.followers_count - 1);
-    } else {
-      await followUser(user.id);
-      user.is_following = true;
-      user.followers_count += 1;
-    }
-    followState.value[user.id] = user.is_following;
-  } catch {
-    followState.value[user.id] = user.is_following;
-  }
-}
 
 let debounceTimer: ReturnType<typeof setTimeout>;
 
@@ -119,7 +98,13 @@ async function doSearch(q: string) {
 function onInput() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    router.replace({ query: query.value.trim() ? { q: query.value } : {} });
+    const newQuery = { ...route.query };
+    if (query.value.trim()) {
+      newQuery.q = query.value;
+    } else {
+      delete newQuery.q;
+    }
+    router.replace({ query: newQuery });
     doSearch(query.value);
   }, 400);
 }
@@ -127,6 +112,7 @@ function onInput() {
 function selectType(type: "album" | "artist" | "music" | "user") {
   if (searchType.value === type) return;
   searchType.value = type;
+  router.replace({ query: { ...route.query, type } });
   if (query.value.trim()) doSearch(query.value);
 }
 
@@ -163,6 +149,17 @@ watch(
     if (v !== query.value) {
       query.value = v;
       doSearch(v);
+    }
+  },
+);
+
+watch(
+  () => route.query.type,
+  (val) => {
+    const v = (val as any) ?? "album";
+    if (v !== searchType.value) {
+      searchType.value = v;
+      if (query.value.trim()) doSearch(query.value);
     }
   },
 );
@@ -297,32 +294,6 @@ watch(
             {{ user.followers_count }} seguidores
           </p>
         </div>
-        <!-- Follow button (não mostra para o próprio usuário) -->
-        <button
-          v-if="user.id !== auth.user?.id"
-          @click.stop="toggleFollow(user)"
-          :disabled="followState[user.id] === 'loading'"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-200 shrink-0"
-          :class="
-            user.is_following
-              ? 'border-[var(--color-border)] text-muted hover:border-red-500/50 hover:text-red-400'
-              : 'border-primary text-primary hover:bg-primary hover:text-white'
-          "
-        >
-          <Loader2
-            v-if="followState[user.id] === 'loading'"
-            class="w-3.5 h-3.5 animate-spin"
-          />
-          <UserCheck v-else-if="user.is_following" class="w-3.5 h-3.5" />
-          <UserPlus v-else class="w-3.5 h-3.5" />
-          {{
-            followState[user.id] === "loading"
-              ? ""
-              : user.is_following
-                ? "Seguindo"
-                : "Seguir"
-          }}
-        </button>
       </div>
     </div>
 

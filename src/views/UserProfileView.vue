@@ -241,6 +241,30 @@ async function toggleFollow() {
               </div>
             </div>
           </div>
+
+          <!-- Pinned Albums -->
+          <div v-if="user.pinned_albums?.length" class="mt-8 pt-6 border-t border-white/10 flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-semibold text-white">Álbuns favoritos</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-4 sm:gap-6">
+              <button
+                v-for="album in user.pinned_albums"
+                :key="album.id"
+                @click="router.push({ name: 'album-detail', params: { id: album.id } })"
+                class="flex flex-col items-start gap-2 group text-left w-24 sm:w-28 md:w-32"
+              >
+                <div class="w-full aspect-square relative rounded-xl overflow-hidden shadow-lg transition-transform group-hover:-translate-y-1">
+                  <AppImage :src="album.image_url" :alt="album.name" type="album" class="w-full h-full" />
+                </div>
+                <div class="w-full">
+                  <p class="text-xs font-semibold text-white truncate">{{ album.name }}</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
