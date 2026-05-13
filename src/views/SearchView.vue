@@ -13,14 +13,12 @@ import {
 } from "lucide-vue-next";
 import { fetchSearch } from "../services/fetchService";
 import { searchUsers } from "../services/userService";
-import { useAuthStore } from "../stores/auth";
 import type { FetchAlbum, FetchArtist, FetchMusicResult } from "../types";
 import type { UserDTO } from "../services/userService";
 import AppImage from "../components/AppImage.vue";
 
 const route = useRoute();
 const router = useRouter();
-const auth = useAuthStore();
 
 const query = ref((route.query.q as string) ?? "");
 const searchType = ref<"album" | "artist" | "music" | "user">(
