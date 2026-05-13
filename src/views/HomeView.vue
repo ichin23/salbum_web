@@ -65,8 +65,6 @@ async function loadMore() {
     <!-- Ouvido recentemente (Spotify) -->
     <RecentlyPlayedSection v-if="auth.user?.spotify_linked" />
 
-
-
     <!-- Feed de atividades -->
     <section>
       <div class="flex items-center gap-2 mb-5">

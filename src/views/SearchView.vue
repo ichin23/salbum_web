@@ -18,14 +18,13 @@ import type { FetchAlbum, FetchArtist, FetchMusicResult } from "../types";
 import type { UserDTO } from "../services/userService";
 import AppImage from "../components/AppImage.vue";
 
-
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 
 const query = ref((route.query.q as string) ?? "");
 const searchType = ref<"album" | "artist" | "music" | "user">(
-  (route.query.type as any) ?? "album"
+  (route.query.type as any) ?? "album",
 );
 const albumResults = ref<FetchAlbum[]>([]);
 const artistResults = ref<FetchArtist[]>([]);
@@ -218,8 +217,6 @@ watch(
         {{ chip.label }}
       </button>
     </div>
-
-
 
     <!-- Skeleton loading: grid para álbuns/artistas -->
     <div
