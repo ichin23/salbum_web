@@ -215,8 +215,9 @@ const sortedDiscs = computed(() => {
     <!-- Hero -->
     <div class="relative">
       <div
+        v-if="album.image_url && !album.image_url.endsWith('/null')"
         class="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 scale-110"
-        :style="{ backgroundImage: `url(${getCover(album.image_url)})` }"
+        :style="{ backgroundImage: `url(${album.image_url})` }"
       />
       <div
         class="absolute inset-0 bg-gradient-to-b from-dark/40 via-dark/70 to-dark"
