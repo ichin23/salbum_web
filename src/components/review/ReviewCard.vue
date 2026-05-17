@@ -13,6 +13,7 @@ import {
   Check,
   Loader2,
   ExternalLink,
+  MessageSquare,
 } from "lucide-vue-next";
 import {
   likeReview,
@@ -381,6 +382,11 @@ async function confirmDelete() {
         <Heart class="w-4 h-4" :fill="liked ? 'currentColor' : 'none'" />
         {{ likeCount }}
       </button>
+
+      <span class="flex items-center gap-1.5 text-xs text-muted">
+        <MessageSquare class="w-4 h-4" />
+        {{ item.commentCount }}
+      </span>
 
       <a
         v-if="spotifyUrl"
