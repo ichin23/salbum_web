@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import {
   Heart,
   ChevronDown,
@@ -33,6 +34,7 @@ const emit = defineEmits<{
 }>();
 
 const auth = useAuthStore();
+const router = useRouter();
 const review = computed(() => props.item.review);
 const liked = ref(props.item.likedByCurrentUser);
 const likeCount = ref(props.item.likeCount);
@@ -151,8 +153,9 @@ async function confirmDelete() {
 
 <template>
   <div
-    class="card p-5 space-y-4 hover:border-[var(--color-muted)]/40 transition-colors duration-200"
+    class="card p-5 space-y-4 hover:border-[var(--color-muted)]/40 transition-colors duration-200 cursor-pointer"
     :class="deleting ? 'opacity-40 pointer-events-none' : ''"
+    @click="router.push({ name: 'review-detail', params: { id: review.id } })"
   >
     <!-- Header -->
     <div class="flex items-start justify-between gap-3">
@@ -232,7 +235,7 @@ async function confirmDelete() {
     <div v-if="menuOpen" class="fixed inset-0 z-10" @click="closeMenu" />
 
     <!-- Inline edit mode -->
-    <div v-if="editing" class="space-y-2">
+    <div v-if="editing" class="space-y-2" @click.stop>
       <textarea
         v-model="editText"
         rows="4"
@@ -268,7 +271,7 @@ async function confirmDelete() {
     </p>
 
     <!-- Track-by-track scores / feelings -->
-    <div v-if="hasTracks">
+    <div v-if="hasTracks" @click.stop>
       <div class="flex items-center gap-3 flex-wrap">
         <button
           @click="expanded = !expanded"
@@ -367,6 +370,7 @@ async function confirmDelete() {
     <!-- Footer -->
     <div
       class="flex items-center justify-between pt-1 border-t border-[var(--color-border)]"
+      @click.stop
     >
       <button
         @click="toggleLike"

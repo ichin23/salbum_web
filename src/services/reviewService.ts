@@ -6,6 +6,11 @@ export function getAlbumReviews(albumId: string): Promise<FullReviewDTO[]> {
     return apiRequest<FullReviewDTO[]>(`/reviews/album/${albumId}`)
 }
 
+/** GET /reviews/{id} */
+export function getReview(id: string): Promise<FullReviewDTO> {
+    return apiRequest<FullReviewDTO>(`/reviews/${id}`)
+}
+
 /** POST /reviews */
 export function createReview(payload: CreateReviewRequest): Promise<ReviewDTO> {
     return apiRequest<ReviewDTO>('/reviews', {

@@ -56,6 +56,11 @@ const router = createRouter({
                     component: () => import('../views/WriteReviewView.vue'),
                 },
                 {
+                    path: 'reviews/:id',
+                    name: 'review-detail',
+                    component: () => import('../views/ReviewDetailView.vue'),
+                },
+                {
                     path: 'lists',
                     name: 'listen-list',
                     component: () => import('../views/ListenListView.vue'),
