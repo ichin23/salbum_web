@@ -11,12 +11,14 @@ import {
   X,
   Check,
   Loader2,
+  Heart,
+  ExternalLink,
 } from "lucide-vue-next";
 import type { ActivityItemDTO } from "../types";
 import AppImage from "./AppImage.vue";
 import EmotionChart from "./review/EmotionChart.vue";
 import { useAuthStore } from "../stores/auth";
-import { updateReview, deleteReview } from "../services/reviewService";
+import { updateReview, deleteReview, likeReview, unlikeReview } from "../services/reviewService";
 import {
   updateMusicShare,
   deleteMusicShare,
@@ -182,6 +184,30 @@ async function confirmDelete() {
     }
   } catch {
     deleting.value = false;
+  }
+}
+
+const liked = ref(props.item.review?.likedByCurrentUser ?? false);
+const likeCount = ref(props.item.review?.likeCount ?? 0);
+const liking = ref(false);
+
+async function toggleLike() {
+  if (liking.value || !isReview.value || !review.value) return;
+  liking.value = true;
+  try {
+    if (liked.value) {
+      await unlikeReview(review.value.review.id);
+      liked.value = false;
+      likeCount.value--;
+    } else {
+      await likeReview(review.value.review.id);
+      liked.value = true;
+      likeCount.value++;
+    }
+  } catch {
+    // silently ignore
+  } finally {
+    liking.value = false;
   }
 }
 </script>
@@ -363,6 +389,21 @@ async function confirmDelete() {
         class="rounded-xl bg-[var(--color-surface-2)] p-2.5"
       >
         <EmotionChart :review-id="review!.review.id" />
+      </div>
+
+      <div
+        v-if="!editing"
+        class="flex items-center justify-between pt-1 border-t border-[var(--color-border)] mt-2"
+      >
+        <button
+          @click.stop="toggleLike"
+          class="flex items-center gap-1.5 text-xs transition-colors"
+          :class="liked ? 'text-red-400' : 'text-muted hover:text-red-400'"
+          :disabled="liking"
+        >
+          <Heart class="w-4 h-4" :fill="liked ? 'currentColor' : 'none'" />
+          {{ likeCount }}
+        </button>
       </div>
     </template>
 
