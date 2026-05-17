@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient'
-import type { FullReviewDTO, ReviewDTO, CreateReviewRequest, FeelingOptionDTO, TrackEmotionPointDTO } from '../types'
+import type { FullReviewDTO, ReviewDTO, CreateReviewRequest, FeelingOptionDTO, TrackEmotionPointDTO, ReviewCommentDTO } from '../types'
 
 /** GET /reviews/album/{albumId} */
 export function getAlbumReviews(albumId: string): Promise<FullReviewDTO[]> {
@@ -50,4 +50,17 @@ export function getFeelings(): Promise<FeelingOptionDTO[]> {
 /** GET /reviews/{id}/emotion-chart */
 export function getEmotionChart(reviewId: string): Promise<TrackEmotionPointDTO[]> {
     return apiRequest<TrackEmotionPointDTO[]>(`/reviews/${reviewId}/emotion-chart`)
+}
+
+/** GET /reviews/{reviewId}/comments */
+export function getReviewComments(reviewId: string): Promise<ReviewCommentDTO[]> {
+    return apiRequest<ReviewCommentDTO[]>(`/reviews/${reviewId}/comments`)
+}
+
+/** POST /reviews/{reviewId}/comments */
+export function addReviewComment(reviewId: string, content: string): Promise<ReviewCommentDTO> {
+    return apiRequest<ReviewCommentDTO>(`/reviews/${reviewId}/comments`, {
+        method: 'POST',
+        body: { content },
+    })
 }
