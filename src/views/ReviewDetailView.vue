@@ -6,6 +6,7 @@ import { getReview, likeReview, unlikeReview } from '../services/reviewService'
 import type { FullReviewDTO } from '../types'
 import AppImage from '../components/AppImage.vue'
 import EmotionChart from '../components/review/EmotionChart.vue'
+import ReviewComments from '../components/review/ReviewComments.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +15,8 @@ const review = ref<FullReviewDTO | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const liking = ref(false)
+const localCommentCount = ref(0)
+const commentsSection = ref<HTMLElement | null>(null)
 
 const formattedDate = computed(() => {
     if (!review.value) return ''
@@ -31,6 +34,7 @@ onMounted(async () => {
         loading.value = true
         const id = route.params.id as string
         review.value = await getReview(id)
+        localCommentCount.value = review.value.commentCount
     } catch (e) {
         error.value = e instanceof Error ? e.message : 'Erro ao carregar review'
     } finally {
@@ -56,6 +60,10 @@ async function toggleLike() {
     } finally {
         liking.value = false
     }
+}
+
+function scrollToComments() {
+    commentsSection.value?.scrollIntoView({ behavior: 'smooth' })
 }
 </script>
 
@@ -193,16 +201,24 @@ async function toggleLike() {
                 {{ review.likeCount }} curtidas
             </button>
 
-            <!-- TODO: Comments logic in next phase -->
-            <button class="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-semibold bg-[var(--color-surface-2)] text-white hover:bg-[var(--color-surface)] border border-[var(--color-border)] transition-all">
+            <button @click="scrollToComments" class="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-semibold bg-[var(--color-surface-2)] text-white hover:bg-[var(--color-surface)] border border-[var(--color-border)] transition-all">
                 <MessageSquare class="w-5 h-5" />
-                {{ review.commentCount }} comentários
+                {{ localCommentCount }} comentários
             </button>
             
             <a v-if="review.review.album.spotify_url" :href="review.review.album.spotify_url" target="_blank" class="ml-auto flex items-center gap-2 px-4 py-2.5 rounded-2xl font-semibold text-[#1DB954] bg-[#1DB954]/10 hover:bg-[#1DB954]/20 border border-[#1DB954]/20 transition-all">
                 <ExternalLink class="w-4 h-4" />
                 Spotify
             </a>
+        </div>
+
+        <!-- Comments Section -->
+        <div ref="commentsSection" class="mt-8">
+            <ReviewComments
+                :review-id="review.review.id"
+                :initial-count="localCommentCount"
+                @count-updated="localCommentCount = $event"
+            />
         </div>
     </div>
   </div>
