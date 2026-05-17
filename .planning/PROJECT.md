@@ -12,14 +12,14 @@ Providing a native-like, fluid, and visually appealing experience on mobile devi
 - No PWA capabilities, caching, or offline support implemented yet.
 - See `.planning/codebase/` for detailed architectural state.
 
-## Current Milestone: v1.2 UI and State Fixes
+## Current Milestone: v1.3 Review Interactions
 
-**Goal:** Fix stale data in profile, missing links in feed, and state reset in search.
+**Goal:** Enable users to fully interact with reviews through likes, comments, and a dedicated details view.
 
 **Target features:**
-- Refresh user data on profile load
-- Add profile links to feed items
-- Persist search type in URL
+- Review details view page
+- Review Likes (toggle, count, status)
+- Review Comments (list, post)
 
 
 ## Requirements
