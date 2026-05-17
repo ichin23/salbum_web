@@ -404,6 +404,11 @@ async function toggleLike() {
           <Heart class="w-4 h-4" :fill="liked ? 'currentColor' : 'none'" />
           {{ likeCount }}
         </button>
+
+        <span class="flex items-center gap-1.5 text-xs text-muted">
+          <MessageSquare class="w-3.5 h-3.5" />
+          {{ review.commentCount }}
+        </span>
       </div>
     </template>
 
