@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { RouterLink } from "vue-router";
+import { RouterLink, useRouter } from "vue-router";
 import {
   Star,
   Share2,
@@ -28,6 +28,7 @@ const props = defineProps<{ item: ActivityItemDTO }>();
 const emit = defineEmits<{ (e: "deleted", id: string): void }>();
 
 const auth = useAuthStore();
+const router = useRouter();
 
 const isReview = computed(
   () => props.item.type === "REVIEW" || props.item.type === "RATING",
@@ -210,19 +211,30 @@ async function toggleLike() {
     liking.value = false;
   }
 }
+
+function onCardClick() {
+  closeMenu();
+  if (isReview.value && review.value) {
+    router.push({ name: 'review-detail', params: { id: review.value.review.id } });
+  }
+}
 </script>
 
 <template>
   <article
     class="card p-3 space-y-2 hover:border-[var(--color-muted)]/30 transition-colors overflow-hidden relative"
-    :class="deleting ? 'opacity-40 pointer-events-none' : ''"
-    @click.self="closeMenu"
+    :class="[
+      deleting ? 'opacity-40 pointer-events-none' : '',
+      isReview ? 'cursor-pointer hover:border-primary/40' : ''
+    ]"
+    @click="onCardClick"
   >
     <div class="flex items-center gap-2 min-w-0">
-      <component
-        :is="user?.id ? RouterLink : 'div'"
-        v-bind="user?.id ? { to: { name: 'user-profile', params: { id: user.id } } } : {}"
+      <RouterLink
+        v-if="user?.id"
+        :to="{ name: 'user-profile', params: { id: user.id } }"
         class="flex items-center gap-2 min-w-0 group cursor-pointer"
+        @click.stop
       >
         <div class="w-7 h-7 flex-shrink-0 aspect-square">
           <AppImage
@@ -242,7 +254,27 @@ async function toggleLike() {
             {{ formattedDate }}
           </p>
         </div>
-      </component>
+      </RouterLink>
+      <div v-else class="flex items-center gap-2 min-w-0">
+        <div class="w-7 h-7 flex-shrink-0 aspect-square">
+          <AppImage
+            :src="null"
+            alt=""
+            initial="?"
+            type="artist"
+            rounded="full"
+            class="w-full h-full"
+          />
+        </div>
+        <div class="flex-1 min-w-0 overflow-hidden">
+          <p class="text-xs font-semibold text-white truncate leading-none">
+            Usuário
+          </p>
+          <p class="text-[11px] text-muted mt-0.5 leading-none truncate">
+            {{ formattedDate }}
+          </p>
+        </div>
+      </div>
       <span
         class="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap"
         :class="
@@ -256,9 +288,9 @@ async function toggleLike() {
         {{ isReview ? "Review" : "Compartilhou" }}
       </span>
 
-      <div v-if="isOwner" class="relative flex-shrink-0">
+      <div v-if="isOwner" class="relative flex-shrink-0" @click.stop>
         <button
-          @click.stop="openMenu"
+          @click="openMenu"
           class="p-1 rounded-lg text-muted hover:text-white hover:bg-[var(--color-surface-2)] transition-colors"
         >
           <MoreHorizontal class="w-4 h-4" />
@@ -266,7 +298,6 @@ async function toggleLike() {
         <div
           v-if="menuOpen"
           class="absolute right-0 top-full mt-1 z-20 w-36 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl overflow-hidden"
-          @click.stop
         >
           <button
             @click="startEdit"
@@ -286,12 +317,13 @@ async function toggleLike() {
       </div>
     </div>
 
-    <div v-if="menuOpen" class="fixed inset-0 z-10" @click="closeMenu" />
+    <div v-if="menuOpen" class="fixed inset-0 z-10" @click.stop="closeMenu" />
 
     <template v-if="isReview && review">
       <RouterLink
         :to="{ name: 'album-detail', params: { id: review.review.album.id } }"
         class="flex items-center gap-2 p-2 rounded-xl bg-[var(--color-surface-2)] hover:bg-[var(--color-surface)] transition-colors group overflow-hidden"
+        @click.stop
       >
         <div class="w-9 h-9 flex-shrink-0 aspect-square">
           <AppImage
@@ -413,10 +445,11 @@ async function toggleLike() {
     </template>
 
     <template v-if="isShare && share">
-      <component
-        :is="shareRoute ? RouterLink : 'div'"
-        v-bind="shareRoute ? { to: shareRoute } : {}"
+      <RouterLink
+        v-if="shareRoute"
+        :to="shareRoute"
         class="flex items-center gap-2 p-2 rounded-xl bg-[var(--color-surface-2)] hover:bg-[var(--color-surface)] transition-colors group overflow-hidden"
+        @click.stop
       >
         <div class="w-9 h-9 flex-shrink-0 aspect-square">
           <AppImage
@@ -438,7 +471,30 @@ async function toggleLike() {
             {{ shareSubtitle }}
           </p>
         </div>
-      </component>
+      </RouterLink>
+      <div
+        v-else
+        class="flex items-center gap-2 p-2 rounded-xl bg-[var(--color-surface-2)] overflow-hidden"
+      >
+        <div class="w-9 h-9 flex-shrink-0 aspect-square">
+          <AppImage
+            :src="shareCover"
+            :alt="shareTitle"
+            :type="shareImageType"
+            :initial="shareInitial"
+            rounded="lg"
+            class="w-full h-full"
+          />
+        </div>
+        <div class="flex-1 min-w-0 overflow-hidden">
+          <p class="text-xs font-semibold text-white truncate">
+            {{ shareTitle }}
+          </p>
+          <p v-if="shareSubtitle" class="text-[11px] text-muted truncate">
+            {{ shareSubtitle }}
+          </p>
+        </div>
+      </div>
 
       <div v-if="editing" class="space-y-2">
         <textarea
