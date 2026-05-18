@@ -16,7 +16,8 @@ import {
   Pencil,
   RefreshCw,
 } from "lucide-vue-next";
-import { fetchReleaseDetails, syncAlbum } from "../services/fetchService";
+import { fetchReleaseDetails, syncAlbum, fetchAlbumImage } from "../services/fetchService";
+import { updateAlbum } from "../services/albumService";
 import { getAlbumReviews } from "../services/reviewService";
 import type { FetchAlbumDetails, FullReviewDTO, ReviewDTO } from "../types";
 import AppImage from "../components/AppImage.vue";
@@ -53,6 +54,33 @@ onMounted(async () => {
     ]);
     album.value = data.album;
     userReview.value = data.userReview;
+
+    if (!album.value.image_url || album.value.image_url.endsWith('/null')) {
+      fetchAlbumImage(albumId)
+        .then((res) => {
+          if (res.imageUrl && album.value) {
+            album.value.image_url = res.imageUrl;
+            const musics = album.value.musics.map(m => ({
+              name: m.name,
+              position: m.position,
+              length: m.length,
+              artistIds: m.artists.map(a => a.id)
+            }));
+            updateAlbum(albumId, {
+              name: album.value.name,
+              type: album.value.type,
+              country: album.value.country,
+              release_date: album.value.release_date,
+              artistIds: album.value.artists.map(a => a.id),
+              genres: album.value.genres || [],
+              image_url: res.imageUrl,
+              musics: musics
+            }).catch(console.error);
+          }
+        })
+        .catch(() => {});
+    }
+
     // Load reviews in the background (non-blocking)
     getAlbumReviews(albumId)
       .then((r) => {
