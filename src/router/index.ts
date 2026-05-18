@@ -61,6 +61,11 @@ const router = createRouter({
                     component: () => import('../views/ReviewDetailView.vue'),
                 },
                 {
+                    path: 'shares/:id',
+                    name: 'share-detail',
+                    component: () => import('../views/MusicShareDetailView.vue'),
+                },
+                {
                     path: 'lists',
                     name: 'listen-list',
                     component: () => import('../views/ListenListView.vue'),

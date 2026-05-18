@@ -43,7 +43,12 @@ export async function getUserActivityFeed(userId: string): Promise<ActivityItemD
         type: 'MUSIC_SHARE' as const,
         timestamp: s.createdAt,
         review: null,
-        musicShare: s,
+        musicShare: {
+            musicShare: s,
+            likeCount: 0,
+            likedByCurrentUser: false,
+            commentCount: 0
+        },
     }))
 
     return [...reviewItems, ...shareItems].sort(

@@ -22,6 +22,8 @@ import { updateReview, deleteReview, likeReview, unlikeReview } from "../service
 import {
   updateMusicShare,
   deleteMusicShare,
+  likeMusicShare,
+  unlikeMusicShare,
 } from "../services/musicShareService";
 
 const props = defineProps<{ item: ActivityItemDTO }>();
@@ -36,7 +38,8 @@ const isReview = computed(
 const isShare = computed(() => props.item.type === "MUSIC_SHARE");
 
 const review = computed(() => props.item.review);
-const share = computed(() => props.item.musicShare);
+const shareFull = computed(() => props.item.musicShare);
+const share = computed(() => shareFull.value?.musicShare ?? null);
 
 const shareTitle = computed(() => {
   const s = share.value;
@@ -188,27 +191,55 @@ async function confirmDelete() {
   }
 }
 
-const liked = ref(props.item.review?.likedByCurrentUser ?? false);
-const likeCount = ref(props.item.review?.likeCount ?? 0);
+const liked = ref(
+  isReview.value
+    ? (props.item.review?.likedByCurrentUser ?? false)
+    : (props.item.musicShare?.likedByCurrentUser ?? false)
+);
+const likeCount = ref(
+  isReview.value
+    ? (props.item.review?.likeCount ?? 0)
+    : (props.item.musicShare?.likeCount ?? 0)
+);
 const liking = ref(false);
 
 async function toggleLike() {
-  if (liking.value || !isReview.value || !review.value) return;
-  liking.value = true;
-  try {
-    if (liked.value) {
-      await unlikeReview(review.value.review.id);
-      liked.value = false;
-      likeCount.value--;
-    } else {
-      await likeReview(review.value.review.id);
-      liked.value = true;
-      likeCount.value++;
+  if (liking.value) return;
+
+  if (isReview.value && review.value) {
+    liking.value = true;
+    try {
+      if (liked.value) {
+        await unlikeReview(review.value.review.id);
+        liked.value = false;
+        likeCount.value--;
+      } else {
+        await likeReview(review.value.review.id);
+        liked.value = true;
+        likeCount.value++;
+      }
+    } catch {
+      // silently ignore
+    } finally {
+      liking.value = false;
     }
-  } catch {
-    // silently ignore
-  } finally {
-    liking.value = false;
+  } else if (isShare.value && share.value) {
+    liking.value = true;
+    try {
+      if (liked.value) {
+        await unlikeMusicShare(share.value.id);
+        liked.value = false;
+        likeCount.value--;
+      } else {
+        await likeMusicShare(share.value.id);
+        liked.value = true;
+        likeCount.value++;
+      }
+    } catch {
+      // silently ignore
+    } finally {
+      liking.value = false;
+    }
   }
 }
 
@@ -216,16 +247,18 @@ function onCardClick() {
   closeMenu();
   if (isReview.value && review.value) {
     router.push({ name: 'review-detail', params: { id: review.value.review.id } });
+  } else if (isShare.value && share.value) {
+    router.push({ name: 'share-detail', params: { id: share.value.id } });
   }
 }
 </script>
 
 <template>
   <article
-    class="card p-3 space-y-2 hover:border-[var(--color-muted)]/30 transition-colors overflow-hidden relative"
+    class="card p-3 space-y-2 hover:border-[var(--color-muted)]/30 transition-colors overflow-hidden relative cursor-pointer"
     :class="[
       deleting ? 'opacity-40 pointer-events-none' : '',
-      isReview ? 'cursor-pointer hover:border-primary/40' : ''
+      'hover:border-primary/40'
     ]"
     @click="onCardClick"
   >
@@ -276,12 +309,7 @@ function onCardClick() {
         </div>
       </div>
       <span
-        class="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap"
-        :class="
-          isReview
-            ? 'bg-primary/10 text-primary'
-            : 'bg-secondary/10 text-secondary'
-        "
+        class="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap bg-primary/10 text-primary"
       >
         <MessageSquare v-if="isReview" class="w-2.5 h-2.5 flex-shrink-0" />
         <Share2 v-else class="w-2.5 h-2.5 flex-shrink-0" />
@@ -529,6 +557,27 @@ function onCardClick() {
       >
         "{{ displayComment }}"
       </p>
+
+      <div
+        v-if="!editing"
+        class="flex items-center justify-between pt-1 border-t border-[var(--color-border)] mt-2"
+        @click.stop
+      >
+        <button
+          @click.stop="toggleLike"
+          class="flex items-center gap-1.5 text-xs transition-colors"
+          :class="liked ? 'text-red-400' : 'text-muted hover:text-red-400'"
+          :disabled="liking"
+        >
+          <Heart class="w-4 h-4" :fill="liked ? 'currentColor' : 'none'" />
+          {{ likeCount }}
+        </button>
+
+        <span class="flex items-center gap-1.5 text-xs text-muted">
+          <MessageSquare class="w-3.5 h-3.5" />
+          {{ shareFull?.commentCount ?? 0 }}
+        </span>
+      </div>
     </template>
   </article>
 </template>

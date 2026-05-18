@@ -263,13 +263,13 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
           :key="
             item.type === 'REVIEW' || item.type === 'RATING'
               ? (item.review?.review.id ?? i)
-              : (item.musicShare?.id ?? i)
+              : (item.musicShare?.musicShare.id ?? i)
           "
           :item="item"
           @deleted="
             (id) => {
               feedItems = feedItems.filter(
-                (f) => f.review?.review.id !== id && f.musicShare?.id !== id,
+                (f) => f.review?.review.id !== id && f.musicShare?.musicShare.id !== id,
               );
             }
           "

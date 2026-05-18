@@ -371,7 +371,7 @@ export interface ActivityItemDTO {
     type: 'REVIEW' | 'RATING' | 'MUSIC_SHARE'
     timestamp: string          // Instant → ISO-8601 string
     review: FullReviewInfoDTO | null
-    musicShare: MusicShareDTO | null
+    musicShare: FullMusicShareDTO | null
 }
 
 /** GET /activity/feed response */
@@ -406,6 +406,22 @@ export interface ReviewCommentDTO {
     user: UserInfoDTO
     content: string
     createdAt: string
+}
+
+/** MusicShareCommentDTO — comment on a music share */
+export interface MusicShareCommentDTO {
+    id: string
+    user: UserInfoDTO
+    content: string
+    createdAt: string
+}
+
+/** FullMusicShareDTO — music share with likes and comment count */
+export interface FullMusicShareDTO {
+    musicShare: MusicShareDTO
+    likeCount: number
+    likedByCurrentUser: boolean
+    commentCount: number
 }
 
 // ─── User Profile ─────────────────────────────────────────────────────────────

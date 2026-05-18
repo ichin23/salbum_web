@@ -321,7 +321,7 @@ async function toggleFollow() {
             :key="
               item.type === 'REVIEW' || item.type === 'RATING'
                 ? (item.review?.review.id ?? i)
-                : (item.musicShare?.id ?? i)
+                : (item.musicShare?.musicShare.id ?? i)
             "
             :item="item"
           />
