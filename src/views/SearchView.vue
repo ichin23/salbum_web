@@ -103,7 +103,7 @@ function onInput() {
     }
     router.replace({ query: newQuery });
     doSearch(query.value);
-  }, 400);
+  }, 2000);
 }
 
 function selectType(type: "album" | "artist" | "music" | "user") {
