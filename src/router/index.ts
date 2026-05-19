@@ -30,10 +30,17 @@ const router = createRouter({
             // Não usa guestOnly: usuários autenticados também podem redefinir via link de email
         },
         {
-            // OAuth callback — handles both Google and Spotify
+            // OAuth callback — handles Google login
             path: '/auth/callback/:provider',
             name: 'oauth-callback',
             component: () => import('../views/auth/OAuthCallbackView.vue'),
+            beforeEnter: (to, _from, next) => {
+                if (to.params.provider !== 'google') {
+                    next({ name: 'login' })
+                } else {
+                    next()
+                }
+            }
         },
         // App routes (with sidebar layout)
         {
