@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { BarChart2, BookOpen, Share2, Loader2, Pencil, LogOut } from "lucide-vue-next";
+import { BarChart2, BookOpen, Share2, Loader2, Pencil, LogOut, ExternalLink } from "lucide-vue-next";
 import { useAuthStore } from "../stores/auth";
 import { getUserActivityFeed } from "../services/activityService";
 import type { ActivityItemDTO } from "../types";
@@ -8,6 +8,7 @@ import FeedItemCard from "../components/FeedItem.vue";
 
 import AppImage from "../components/AppImage.vue";
 import PinnedAlbumsModal from "../components/profile/PinnedAlbumsModal.vue";
+import UserListModal from "../components/profile/UserListModal.vue";
 import { useRouter } from "vue-router";
 
 const auth = useAuthStore();
@@ -46,6 +47,14 @@ const shareCount = computed(
 );
 
 const isPinnedModalOpen = ref(false);
+
+const isUserListModalOpen = ref(false);
+const userListType = ref<"followers" | "following">("followers");
+
+function openUserList(type: "followers" | "following") {
+  userListType.value = type;
+  isUserListModalOpen.value = true;
+}
 
 onMounted(async () => {
   if (!auth.user?.id) {
@@ -122,6 +131,17 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
                 </p>
               </div>
               <div class="flex flex-col gap-2 mt-1">
+                <a
+                  v-if="auth.user?.spotify_url"
+                  :href="auth.user.spotify_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#1DB954]/20 text-xs font-medium text-[#1DB954] hover:bg-[#1DB954]/10 transition-colors"
+                  title="Abrir perfil no Spotify"
+                >
+                  <ExternalLink class="w-3.5 h-3.5" />
+                  Spotify
+                </a>
                 <button
                   @click="router.push({ name: 'edit-profile' })"
                   class="flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border)] text-xs font-medium text-muted hover:border-primary hover:text-primary transition-colors"
@@ -141,30 +161,30 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
             </div>
 
             <!-- Stats -->
-            <div class="flex flex-wrap gap-4 pt-1">
-              <div class="text-center">
-                <p class="text-lg font-black text-white">
+            <div class="flex flex-wrap gap-2 sm:gap-4 pt-1">
+              <button @click="openUserList('followers')" class="text-center group hover:bg-[var(--color-surface-2)] rounded-xl px-2 sm:px-3 py-2 transition-colors -ml-2 sm:-ml-3">
+                <p class="text-lg font-black text-white group-hover:text-primary transition-colors">
                   {{ auth.user?.followers_count ?? 0 }}
                 </p>
                 <p class="text-[10px] text-muted uppercase tracking-wider">
                   Seguidores
                 </p>
-              </div>
-              <div class="text-center">
-                <p class="text-lg font-black text-white">
+              </button>
+              <button @click="openUserList('following')" class="text-center group hover:bg-[var(--color-surface-2)] rounded-xl px-2 sm:px-3 py-2 transition-colors">
+                <p class="text-lg font-black text-white group-hover:text-primary transition-colors">
                   {{ auth.user?.following_count ?? 0 }}
                 </p>
                 <p class="text-[10px] text-muted uppercase tracking-wider">
                   Seguindo
                 </p>
-              </div>
-              <div class="text-center">
+              </button>
+              <div class="text-center px-2 sm:px-3 py-2">
                 <p class="text-lg font-black text-white">{{ reviewCount }}</p>
                 <p class="text-[10px] text-muted uppercase tracking-wider">
                   Reviews
                 </p>
               </div>
-              <div class="text-center">
+              <div class="text-center px-2 sm:px-3 py-2">
                 <p class="text-lg font-black text-white">{{ shareCount }}</p>
                 <p class="text-[10px] text-muted uppercase tracking-wider">
                   Shares
@@ -294,6 +314,14 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
     <PinnedAlbumsModal
       :is-open="isPinnedModalOpen"
       @close="isPinnedModalOpen = false"
+    />
+    
+    <UserListModal
+      v-if="auth.user?.id"
+      :is-open="isUserListModalOpen"
+      :user-id="auth.user.id"
+      :type="userListType"
+      @close="isUserListModalOpen = false"
     />
   </div>
 </template>

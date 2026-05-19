@@ -309,7 +309,12 @@ function onCardClick() {
         </div>
       </div>
       <span
-        class="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap bg-primary/10 text-primary"
+        class="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap border"
+        :class="
+          isReview
+            ? 'bg-primary/10 text-primary border-primary/20'
+            : 'bg-secondary/10 text-secondary border-secondary/20'
+        "
       >
         <MessageSquare v-if="isReview" class="w-2.5 h-2.5 flex-shrink-0" />
         <Share2 v-else class="w-2.5 h-2.5 flex-shrink-0" />

@@ -111,7 +111,7 @@ async function submitComment() {
       >
         <router-link
           :to="{ name: 'user-profile', params: { id: comment.user.id } }"
-          class="flex-shrink-0"
+          class="flex-shrink-0 w-8 h-8 block"
         >
           <AppImage
             :src="comment.user.imageUrl"
@@ -119,7 +119,6 @@ async function submitComment() {
             :initial="(comment.user.username[0] ?? '?').toUpperCase()"
             type="artist"
             rounded="full"
-            class="w-8 h-8"
           />
         </router-link>
 

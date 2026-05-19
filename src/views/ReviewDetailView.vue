@@ -102,55 +102,83 @@ function scrollToComments() {
           Voltar
         </button>
 
-        <!-- User Info & Album Summary -->
-        <div class="flex flex-col sm:flex-row gap-5 items-start">
-            <div class="w-20 h-20 sm:w-28 sm:h-28 flex-shrink-0 shadow-xl relative z-10 group cursor-pointer" @click="router.push({ name: 'album-detail', params: { id: review.review.album.id } })">
-                <AppImage
-                    :src="review.review.album.image_url"
-                    :alt="review.review.album.name"
-                    type="album"
-                    rounded="xl"
-                    class="w-full h-full group-hover:opacity-80 transition-opacity"
-                />
-            </div>
-
-            <div class="space-y-2 mt-2 sm:mt-0 flex-1">
-                <div class="flex items-center gap-3">
-                    <router-link :to="{ name: 'user-profile', params: { id: review.review.user.id } }" class="flex items-center gap-2 group cursor-pointer">
-                        <AppImage
-                            :src="review.review.user.imageUrl"
-                            :alt="review.review.user.username"
-                            :initial="(review.review.user.username[0] ?? '?').toUpperCase()"
-                            type="artist"
-                            rounded="full"
-                            class="w-8 h-8"
-                        />
-                        <span class="text-white font-semibold group-hover:text-primary transition-colors">{{ review.review.user.username }}</span>
-                    </router-link>
-                    <span class="text-muted text-sm px-2">·</span>
-                    <span class="text-muted text-sm">{{ formattedDate }}</span>
-                </div>
-
-                <div class="pt-1">
-                    <span class="text-xs text-muted font-medium uppercase tracking-wider">Review de</span>
-                    <h1 class="text-xl sm:text-2xl font-black text-white hover:text-primary transition-colors cursor-pointer inline-flex items-center gap-2 ml-1" @click="router.push({ name: 'album-detail', params: { id: review.review.album.id } })">
-                        {{ review.review.album.name }}
-                    </h1>
-                </div>
-
-                <!-- Score Badge -->
-                <div v-if="review.review.albumScore != null" class="flex items-center gap-2 mt-3 bg-[var(--color-surface-2)] w-fit rounded-2xl px-4 py-2 border border-[var(--color-border)]">
-                    <Star class="w-4 h-4 text-yellow-400" fill="currentColor" />
-                    <span class="text-white font-bold text-lg">{{ review.review.albumScore }}</span>
-                    <span class="text-muted text-sm">/100</span>
-                </div>
-            </div>
-        </div>
       </div>
     </div>
 
-    <!-- Review Content -->
-    <div class="px-4 sm:px-8 max-w-4xl mx-auto space-y-10 relative z-10 -mt-2">
+    <!-- Main Content Container (Centered max-w-4xl) -->
+    <div class="px-4 sm:px-8 max-w-4xl mx-auto space-y-8 relative z-10 -mt-2">
+        <!-- User Info Bar -->
+        <div class="flex items-center gap-2 bg-[var(--color-surface-2)]/50 backdrop-blur-md rounded-xl py-1.5 px-3 w-fit">
+            <router-link :to="{ name: 'user-profile', params: { id: review.review.user.id } }" class="flex items-center gap-2 group cursor-pointer">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0">
+                  <AppImage
+                      :src="review.review.user.imageUrl"
+                      :alt="review.review.user.username"
+                      :initial="(review.review.user.username[0] ?? '?').toUpperCase()"
+                      type="artist"
+                      rounded="full"
+                  />
+                </div>
+                <div class="leading-tight">
+                  <div class="flex items-center gap-1">
+                    <span class="text-white text-xs font-semibold group-hover:text-primary transition-colors">
+                      {{ review.review.user.username }}
+                    </span>
+                  </div>
+                  <p class="text-[9px] text-muted leading-none mt-0.5">
+                    escreveu uma review · {{ formattedDate }}
+                  </p>
+                </div>
+            </router-link>
+        </div>
+
+        <!-- Album Showcase Card -->
+        <div 
+          class="flex flex-col md:flex-row gap-6 p-6 items-center md:items-start bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface-2)] border border-[var(--color-border)] rounded-3xl shadow-2xl relative overflow-hidden group cursor-pointer transition-all hover:border-primary/30"
+          @click="router.push({ name: 'album-detail', params: { id: review.review.album.id } })"
+        >
+          <!-- Absolute background glow -->
+          <div class="absolute -right-16 -top-16 w-36 h-36 bg-primary/15 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/25 transition-all duration-500" />
+          
+          <!-- Album Cover Art -->
+          <div class="w-32 h-32 sm:w-40 sm:h-40 md:w-44 md:h-44 flex-shrink-0 shadow-2xl relative rounded-2xl overflow-hidden transition-transform group-hover:scale-[1.02] duration-300 mx-auto md:mx-0">
+              <AppImage
+                  :src="review.review.album.image_url"
+                  :alt="review.review.album.name"
+                  type="album"
+                  rounded="2xl"
+                  class="w-full h-full object-cover"
+              />
+          </div>
+
+          <!-- Album details -->
+          <div class="flex-grow text-center md:text-left space-y-3 mt-4 md:mt-0 flex flex-col justify-center min-w-0 md:pt-2">
+              <div class="flex items-center justify-center md:justify-start gap-2 flex-wrap">
+                <span class="text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25 px-2.5 py-1 rounded-full">
+                  Álbum
+                </span>
+                <!-- Score badge -->
+                <div
+                  v-if="review.review.albumScore != null"
+                  class="flex items-center gap-1 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-2.5 py-0.5"
+                >
+                  <Star class="w-3 h-3 text-yellow-400" fill="currentColor" />
+                  <span class="text-white font-bold text-[10px]">{{ review.review.albumScore }}</span>
+                  <span class="text-muted text-[8px]">/100</span>
+                </div>
+              </div>
+              
+              <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight group-hover:text-primary transition-colors truncate">
+                  {{ review.review.album.name }}
+              </h1>
+              
+              <div class="space-y-1">
+                <p class="text-base text-[var(--color-text)] font-semibold leading-relaxed truncate">
+                    por {{ review.review.album.artists?.map((a) => a.name).join(", ") }}
+                </p>
+              </div>
+          </div>
+        </div>
         <div v-if="review.review.content" class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-6 sm:p-8 shadow-xl">
             <p class="text-[var(--color-text)] leading-relaxed whitespace-pre-wrap text-lg">{{ review.review.content }}</p>
         </div>

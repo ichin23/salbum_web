@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   ArrowLeft,
@@ -9,6 +9,7 @@ import {
   BarChart2,
   BookOpen,
   Share2,
+  ExternalLink,
 } from "lucide-vue-next";
 import { getUserById, followUser, unfollowUser } from "../services/userService";
 import { getUserActivityFeed } from "../services/activityService";
@@ -17,12 +18,13 @@ import type { UserDTO } from "../services/userService";
 import type { ActivityItemDTO } from "../types";
 import AppImage from "../components/AppImage.vue";
 import FeedItemCard from "../components/FeedItem.vue";
+import UserListModal from "../components/profile/UserListModal.vue";
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 
-const userId = route.params.id as string;
+const userId = computed(() => route.params.id as string);
 
 const user = ref<UserDTO | null>(null);
 const loadingUser = ref(true);
@@ -33,6 +35,14 @@ const loadingFeed = ref(false);
 const feedError = ref<string | null>(null);
 
 const followLoading = ref(false);
+
+const isUserListModalOpen = ref(false);
+const userListType = ref<"followers" | "following">("followers");
+
+function openUserList(type: "followers" | "following") {
+  userListType.value = type;
+  isUserListModalOpen.value = true;
+}
 
 type FilterTab = "all" | "reviews" | "shares";
 const activeTab = ref<FilterTab>("all");
@@ -59,15 +69,17 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
   { key: "shares", label: "Shares", icon: Share2 },
 ];
 
-onMounted(async () => {
+async function loadUser() {
   // Se for o próprio usuário, redireciona para o perfil deles
-  if (auth.user?.id === userId) {
+  if (auth.user?.id === userId.value) {
     router.replace({ name: "profile" });
     return;
   }
 
+  loadingUser.value = true;
+  loadError.value = null;
   try {
-    user.value = await getUserById(userId);
+    user.value = await getUserById(userId.value);
   } catch (e) {
     loadError.value = e instanceof Error ? e.message : "Usuário não encontrado";
   } finally {
@@ -76,13 +88,25 @@ onMounted(async () => {
 
   // Buscar feed
   loadingFeed.value = true;
+  feedError.value = null;
+  feedItems.value = [];
   try {
-    feedItems.value = await getUserActivityFeed(userId);
+    feedItems.value = await getUserActivityFeed(userId.value);
   } catch {
     feedError.value = "Erro ao carregar atividades";
   } finally {
     loadingFeed.value = false;
   }
+}
+
+watch(() => route.params.id, () => {
+  if (route.name === 'user-profile') {
+    loadUser();
+  }
+});
+
+onMounted(() => {
+  loadUser();
 });
 
 async function toggleFollow() {
@@ -90,11 +114,11 @@ async function toggleFollow() {
   followLoading.value = true;
   try {
     if (user.value.is_following) {
-      await unfollowUser(userId);
+      await unfollowUser(userId.value);
       user.value.is_following = false;
       user.value.followers_count = Math.max(0, user.value.followers_count - 1);
     } else {
-      await followUser(userId);
+      await followUser(userId.value);
       user.value.is_following = true;
       user.value.followers_count += 1;
     }
@@ -180,49 +204,62 @@ async function toggleFollow() {
                   </p>
                 </div>
 
-                <!-- Follow button -->
-                <button
-                  @click="toggleFollow"
-                  :disabled="followLoading"
-                  class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 mt-1 disabled:opacity-60"
-                  :class="
-                    user.is_following
-                      ? 'border-[var(--color-border)] text-muted hover:border-red-500/50 hover:text-red-400'
-                      : 'border-primary bg-primary text-white hover:bg-primary/90'
-                  "
-                >
-                  <Loader2 v-if="followLoading" class="w-4 h-4 animate-spin" />
-                  <UserCheck v-else-if="user.is_following" class="w-4 h-4" />
-                  <UserPlus v-else class="w-4 h-4" />
-                  {{
-                    followLoading
-                      ? ""
-                      : user.is_following
-                        ? "Seguindo"
-                        : "Seguir"
-                  }}
-                </button>
+                <div class="flex flex-col gap-2 mt-1">
+                  <a
+                    v-if="user.spotify_url"
+                    :href="user.spotify_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#1DB954]/20 text-xs font-medium text-[#1DB954] hover:bg-[#1DB954]/10 transition-colors"
+                    title="Abrir perfil no Spotify"
+                  >
+                    <ExternalLink class="w-3.5 h-3.5" />
+                    Spotify
+                  </a>
+                  <!-- Follow button -->
+                  <button
+                    @click="toggleFollow"
+                    :disabled="followLoading"
+                    class="flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 disabled:opacity-60"
+                    :class="
+                      user.is_following
+                        ? 'border-[var(--color-border)] text-muted hover:border-red-500/50 hover:text-red-400'
+                        : 'border-primary bg-primary text-white hover:bg-primary/90'
+                    "
+                  >
+                    <Loader2 v-if="followLoading" class="w-4 h-4 animate-spin" />
+                    <UserCheck v-else-if="user.is_following" class="w-4 h-4" />
+                    <UserPlus v-else class="w-4 h-4" />
+                    {{
+                      followLoading
+                        ? ""
+                        : user.is_following
+                          ? "Seguindo"
+                          : "Seguir"
+                    }}
+                  </button>
+                </div>
               </div>
 
               <!-- Stats -->
-              <div class="flex flex-wrap gap-4 pt-1">
-                <div class="text-center">
-                  <p class="text-lg font-black text-white">
+              <div class="flex flex-wrap gap-2 sm:gap-4 pt-1">
+                <button @click="openUserList('followers')" class="text-center group hover:bg-[var(--color-surface-2)] rounded-xl px-2 sm:px-3 py-2 transition-colors -ml-2 sm:-ml-3">
+                  <p class="text-lg font-black text-white group-hover:text-primary transition-colors">
                     {{ user.followers_count }}
                   </p>
                   <p class="text-[10px] text-muted uppercase tracking-wider">
                     Seguidores
                   </p>
-                </div>
-                <div class="text-center">
-                  <p class="text-lg font-black text-white">
+                </button>
+                <button @click="openUserList('following')" class="text-center group hover:bg-[var(--color-surface-2)] rounded-xl px-2 sm:px-3 py-2 transition-colors">
+                  <p class="text-lg font-black text-white group-hover:text-primary transition-colors">
                     {{ user.following_count }}
                   </p>
                   <p class="text-[10px] text-muted uppercase tracking-wider">
                     Seguindo
                   </p>
-                </div>
-                <div class="text-center">
+                </button>
+                <div class="text-center px-2 sm:px-3 py-2">
                   <p class="text-lg font-black text-white">
                     {{ reviewCount() }}
                   </p>
@@ -230,7 +267,7 @@ async function toggleFollow() {
                     Reviews
                   </p>
                 </div>
-                <div class="text-center">
+                <div class="text-center px-2 sm:px-3 py-2">
                   <p class="text-lg font-black text-white">
                     {{ shareCount() }}
                   </p>
@@ -340,6 +377,14 @@ async function toggleFollow() {
           </p>
         </div>
       </div>
+      
+      <!-- Modals -->
+      <UserListModal
+        :is-open="isUserListModalOpen"
+        :user-id="user.id"
+        :type="userListType"
+        @close="isUserListModalOpen = false"
+      />
     </template>
   </div>
 </template>

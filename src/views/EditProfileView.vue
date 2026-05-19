@@ -22,6 +22,7 @@ const name = ref(auth.user?.name ?? "");
 const username = ref(auth.user?.username ?? "");
 const bio = ref(auth.user?.bio ?? "");
 const image_url = ref(auth.user?.image_url ?? "");
+const spotify_url = ref(auth.user?.spotify_url ?? "");
 
 const saving = ref(false);
 const success = ref(false);
@@ -55,6 +56,7 @@ async function save() {
       username: username.value.trim(),
       bio: bio.value.trim() || undefined,
       image_url: image_url.value.trim() || null,
+      spotify_url: spotify_url.value.trim() || null,
     });
     success.value = true;
     setTimeout(() => router.push({ name: "profile" }), 800);
@@ -169,6 +171,20 @@ async function save() {
             class="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-4 py-3 text-sm text-white placeholder-muted focus:outline-none focus:border-primary transition-colors resize-none"
           />
           <p class="text-xs text-muted text-right">{{ bio.length }}/200</p>
+        </div>
+
+        <!-- Spotify Profile URL -->
+        <div class="space-y-1.5">
+          <label
+            class="text-xs font-semibold text-muted uppercase tracking-wider"
+            >Link do Perfil no Spotify</label
+          >
+          <input
+            v-model="spotify_url"
+            type="url"
+            placeholder="https://open.spotify.com/user/..."
+            class="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-4 py-3 text-sm text-white placeholder-muted focus:outline-none focus:border-primary transition-colors"
+          />
         </div>
 
         <!-- Feedback -->

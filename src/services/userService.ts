@@ -6,6 +6,7 @@ export interface UpdateProfileRequest {
     username?: string
     bio?: string
     image_url?: string | null
+    spotify_url?: string | null
 }
 
 export interface UserDTO {
@@ -17,6 +18,7 @@ export interface UserDTO {
     following_count: number
     is_following: boolean
     bio: string | null
+    spotify_url?: string | null
     pinned_albums?: import('../types').AlbumInfoDTO[]
 }
 
@@ -48,6 +50,16 @@ export function followUser(id: string): Promise<void> {
 /** DELETE /users/{id}/follow — deixar de seguir um usuário */
 export function unfollowUser(id: string): Promise<void> {
     return apiRequest<void>(`/users/${id}/follow`, { method: 'DELETE' })
+}
+
+/** GET /users/{id}/followers — listar seguidores */
+export function getFollowers(id: string): Promise<UserDTO[]> {
+    return apiRequest<UserDTO[]>(`/users/${id}/followers`)
+}
+
+/** GET /users/{id}/following — listar seguindo */
+export function getFollowing(id: string): Promise<UserDTO[]> {
+    return apiRequest<UserDTO[]>(`/users/${id}/following`)
 }
 
 /** PUT /users/me/pinned-albums — atualiza álbuns favoritos do usuário autenticado */

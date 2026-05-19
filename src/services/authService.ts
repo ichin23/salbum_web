@@ -22,6 +22,7 @@ export interface AuthUser {
     following_count: number
     email_validated: boolean
     spotify_linked: boolean
+    spotify_url?: string | null
     pinned_albums?: import('../types').AlbumInfoDTO[]
 }
 
