@@ -24,6 +24,12 @@ const router = createRouter({
             meta: { guestOnly: true },
         },
         {
+            path: '/reset-password',
+            name: 'reset-password',
+            component: () => import('../views/auth/ResetPasswordView.vue'),
+            // Não usa guestOnly: usuários autenticados também podem redefinir via link de email
+        },
+        {
             // OAuth callback — handles both Google and Spotify
             path: '/auth/callback/:provider',
             name: 'oauth-callback',
