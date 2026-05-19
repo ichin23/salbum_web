@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { changePassword } from "../../services/authService";
 
 const route = useRoute();
-const router = useRouter();
 
 // ─── Token validation ─────────────────────────────────────────────────────────
 
@@ -17,7 +16,9 @@ function isValidJwt(value: string): boolean {
   if (parts.length !== 3) return false;
   try {
     // Tenta decodificar o payload para verificar expiração
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    const part = parts[1];
+    if (!part) return false;
+    const payload = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
     if (payload.exp && Date.now() / 1000 > payload.exp) {
       return false; // token expirado
     }
