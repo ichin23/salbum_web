@@ -79,33 +79,44 @@ function coverSrc(target: ShareTarget): string | null | undefined {
       leave-to-class="opacity-0"
     >
       <div
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex sm:items-center sm:justify-center"
         @click.self="emit('close')"
       >
         <Transition
-          enter-active-class="transition-all duration-200 ease-out"
-          enter-from-class="opacity-0 scale-95 translate-y-2"
-          enter-to-class="opacity-100 scale-100 translate-y-0"
-          leave-active-class="transition-all duration-150 ease-in"
-          leave-from-class="opacity-100 scale-100 translate-y-0"
-          leave-to-class="opacity-0 scale-95 translate-y-2"
+          enter-active-class="transition-all duration-300 ease-out"
+          enter-from-class="translate-y-full sm:translate-y-0 sm:opacity-0 sm:scale-95"
+          enter-to-class="translate-y-0 sm:opacity-100 sm:scale-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="translate-y-0 sm:opacity-100 sm:scale-100"
+          leave-to-class="translate-y-full sm:translate-y-0 sm:opacity-0 sm:scale-95"
           appear
         >
           <div
-            class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
+            class="
+              bg-[var(--color-surface)] border-t sm:border border-[var(--color-border)]
+              sm:rounded-3xl w-full sm:max-w-md shadow-2xl overflow-hidden
+              absolute bottom-0 left-0 right-0 sm:relative sm:mx-4
+              rounded-t-3xl sm:rounded-t-3xl
+            "
           >
             <!-- Header -->
-            <div class="flex items-center justify-between px-6 pt-6 pb-4">
-              <div class="flex items-center gap-2">
-                <Share2 class="w-5 h-5 text-primary" />
-                <h2 class="text-lg font-bold text-white">Compartilhar</h2>
+            <div class="sticky top-0 bg-[var(--color-surface)] z-10">
+              <!-- Mobile handle -->
+              <div class="flex items-center justify-center w-full py-2 sm:hidden">
+                <div class="w-10 h-1 bg-[var(--color-border)] rounded-full" />
               </div>
-              <button
-                @click="emit('close')"
-                class="w-8 h-8 flex items-center justify-center rounded-xl text-muted hover:text-white hover:bg-[var(--color-surface-2)] transition-all"
-              >
-                <X class="w-4 h-4" />
-              </button>
+              <div class="flex items-center justify-between px-6 pb-4 sm:pt-6">
+                <div class="flex items-center gap-2">
+                  <Share2 class="w-5 h-5 text-primary sm:block hidden" />
+                  <h2 class="text-sm sm:text-lg font-bold text-white">Compartilhar</h2>
+                </div>
+                <button
+                  @click="emit('close')"
+                  class="w-8 h-8 flex items-center justify-center rounded-xl text-muted hover:text-white hover:bg-[var(--color-surface-2)] transition-all"
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <!-- Target preview -->
