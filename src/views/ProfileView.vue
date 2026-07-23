@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { BarChart2, BookOpen, Share2, Loader2, Pencil, LogOut, ExternalLink } from "lucide-vue-next";
+import { BarChart2, BookOpen, Share2, Loader2, Pencil, LogOut, ExternalLink, Zap } from "lucide-vue-next";
 import { useAuthStore } from "../stores/auth";
 import { getUserActivityFeed } from "../services/activityService";
 import type { ActivityItemDTO } from "../types";
@@ -24,7 +24,7 @@ const feedItems = ref<ActivityItemDTO[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
-type FilterTab = "all" | "reviews" | "shares";
+type FilterTab = "all" | "reviews" | "shares" | "quickreviews";
 const activeTab = ref<FilterTab>("all");
 
 const filtered = computed(() => {
@@ -34,6 +34,8 @@ const filtered = computed(() => {
     );
   if (activeTab.value === "shares")
     return feedItems.value.filter((a) => a.type === "MUSIC_SHARE");
+  if (activeTab.value === "quickreviews")
+    return feedItems.value.filter((a) => a.type === "QUICK_REVIEW");
   return feedItems.value;
 });
 
@@ -44,6 +46,9 @@ const reviewCount = computed(
 );
 const shareCount = computed(
   () => feedItems.value.filter((a) => a.type === "MUSIC_SHARE").length,
+);
+const quickReviewCount = computed(
+  () => feedItems.value.filter((a) => a.type === "QUICK_REVIEW").length,
 );
 
 const isPinnedModalOpen = ref(false);
@@ -72,10 +77,11 @@ onMounted(async () => {
   }
 });
 
-const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
+const tabs: { key: FilterTab; label: string; icon: any }[] = [
   { key: "all", label: "Tudo", icon: BarChart2 },
   { key: "reviews", label: "Reviews", icon: BookOpen },
   { key: "shares", label: "Shares", icon: Share2 },
+  { key: "quickreviews", label: "Quick Reviews", icon: Zap },
 ];
 </script>
 
@@ -190,6 +196,12 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
                   Shares
                 </p>
               </div>
+              <div class="text-center px-2 sm:px-3 py-2">
+                <p class="text-lg font-black text-white">{{ quickReviewCount }}</p>
+                <p class="text-[10px] text-muted uppercase tracking-wider">
+                  Quick
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -260,7 +272,9 @@ const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
                 ? feedItems.length
                 : tab.key === "reviews"
                   ? reviewCount
-                  : shareCount
+                  : tab.key === "shares"
+                    ? shareCount
+                    : quickReviewCount
             }}
           </span>
         </button>

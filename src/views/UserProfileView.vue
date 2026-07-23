@@ -10,10 +10,13 @@ import {
   BookOpen,
   Share2,
   ExternalLink,
+  Zap,
 } from "lucide-vue-next";
 import { getUserById, followUser, unfollowUser } from "../services/userService";
 import { getUserActivityFeed } from "../services/activityService";
 import { useAuthStore } from "../stores/auth";
+import { useSeoMeta } from "../composables/useSeoMeta";
+import { useJsonLd, buildPersonSchema } from "../composables/useJsonLd";
 import type { UserDTO } from "../services/userService";
 import type { ActivityItemDTO } from "../types";
 import AppImage from "../components/AppImage.vue";
@@ -44,7 +47,7 @@ function openUserList(type: "followers" | "following") {
   isUserListModalOpen.value = true;
 }
 
-type FilterTab = "all" | "reviews" | "shares";
+type FilterTab = "all" | "reviews" | "shares" | "quickreviews";
 const activeTab = ref<FilterTab>("all");
 
 function filtered() {
@@ -54,6 +57,8 @@ function filtered() {
     );
   if (activeTab.value === "shares")
     return feedItems.value.filter((a) => a.type === "MUSIC_SHARE");
+  if (activeTab.value === "quickreviews")
+    return feedItems.value.filter((a) => a.type === "QUICK_REVIEW");
   return feedItems.value;
 }
 
@@ -62,11 +67,14 @@ const reviewCount = () =>
     .length;
 const shareCount = () =>
   feedItems.value.filter((a) => a.type === "MUSIC_SHARE").length;
+const quickReviewCount = () =>
+  feedItems.value.filter((a) => a.type === "QUICK_REVIEW").length;
 
-const tabs: { key: FilterTab; label: string; icon: typeof BarChart2 }[] = [
+const tabs: { key: FilterTab; label: string; icon: any }[] = [
   { key: "all", label: "Tudo", icon: BarChart2 },
   { key: "reviews", label: "Reviews", icon: BookOpen },
   { key: "shares", label: "Shares", icon: Share2 },
+  { key: "quickreviews", label: "Quick Reviews", icon: Zap },
 ];
 
 async function loadUser() {
@@ -80,6 +88,30 @@ async function loadUser() {
   loadError.value = null;
   try {
     user.value = await getUserById(userId.value);
+
+    // SEO meta after data loads
+    if (user.value) {
+      useSeoMeta({
+        title: computed(() => user.value?.name ?? user.value?.username ?? "Perfil"),
+        description: computed(() => {
+          const u = user.value;
+          if (!u) return "";
+          const parts = [`${u.name || u.username}`];
+          if (u.bio) parts.push(u.bio.slice(0, 150));
+          if (u.followers_count) parts.push(`${u.followers_count} seguidores`);
+          return parts.join(". ") + ". Perfil no Salbum.";
+        }),
+        image: computed(() => user.value?.image_url || null),
+        type: "profile",
+      })
+
+      useJsonLd(computed(() => buildPersonSchema({
+        name: user.value!.name || user.value!.username,
+        description: user.value!.bio,
+        image: user.value!.image_url,
+        url: window.location.href,
+      })))
+    }
   } catch (e) {
     loadError.value = e instanceof Error ? e.message : "Usuário não encontrado";
   } finally {
@@ -275,6 +307,14 @@ async function toggleFollow() {
                     Shares
                   </p>
                 </div>
+                <div class="text-center px-2 sm:px-3 py-2">
+                  <p class="text-lg font-black text-white">
+                    {{ quickReviewCount() }}
+                  </p>
+                  <p class="text-[10px] text-muted uppercase tracking-wider">
+                    Quick
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -335,7 +375,9 @@ async function toggleFollow() {
                   ? feedItems.length
                   : tab.key === "reviews"
                     ? reviewCount()
-                    : shareCount()
+                    : tab.key === "shares"
+                      ? shareCount()
+                      : quickReviewCount()
               }}
             </span>
           </button>
