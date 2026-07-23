@@ -15,25 +15,39 @@ import {
   AlertCircle,
   Pencil,
   RefreshCw,
+  Zap,
+  Menu,
+  X,
+  PencilLine,
+  User,
 } from "lucide-vue-next";
 import { fetchReleaseDetails, syncAlbum, fetchAlbumImage } from "../services/fetchService";
 import { updateAlbum } from "../services/albumService";
 import { getAlbumReviews } from "../services/reviewService";
-import type { FetchAlbumDetails, FullReviewDTO, ReviewDTO } from "../types";
+import { getQuickReviewsByAlbum } from "../services/quickReviewService";
+import { useSeoMeta } from "../composables/useSeoMeta";
+import { useJsonLd, buildMusicAlbumSchema } from "../composables/useJsonLd";
+import type { FetchAlbumDetails, FullReviewDTO, ReviewDTO, FullQuickReviewDTO, QuickReviewDTO } from "../types";
 import AppImage from "../components/AppImage.vue";
 import MusicShareModal from "../components/share/MusicShareModal.vue";
 import ReviewCard from "../components/review/ReviewCard.vue";
+import QuickReviewCard from "../components/review/QuickReviewCard.vue";
+import QuickReviewForm from "../components/review/QuickReviewForm.vue";
+import type { QuickReviewFormTarget } from "../components/review/QuickReviewForm.vue";
 
 import type { ShareTarget } from "../components/share/MusicShareModal.vue";
 import { useListenList, fetchListenList } from "../composables/useListenList";
+import { useAuthStore } from "../stores/auth";
 
 const route = useRoute();
 const router = useRouter();
+const auth = useAuthStore();
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const album = ref<FetchAlbumDetails | null>(null);
 const userReview = ref<ReviewDTO | null>(null);
 const reviews = ref<FullReviewDTO[]>([]);
+const quickReviews = ref<FullQuickReviewDTO[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
@@ -54,6 +68,36 @@ onMounted(async () => {
     ]);
     album.value = data.album;
     userReview.value = data.userReview;
+
+    // SEO meta after data loads
+    if (album.value) {
+      const artistList = album.value.artists.map((a) => a.name).join(", ");
+      useSeoMeta({
+        title: computed(() => `${album.value?.name ?? "Álbum"} por ${artistList}`),
+        description: computed(() => {
+          const a = album.value;
+          if (!a) return "";
+          const parts = [`${a.name} de ${artistList}`];
+          if (a.release_date) parts.push(`Lançado em ${new Date(a.release_date).getFullYear()}`);
+          if (a.rate != null) parts.push(`Nota: ${a.rate.toFixed(1)}/10`);
+          if (a.genres?.length) parts.push(`Gêneros: ${a.genres.join(", ")}`);
+          return parts.join(". ") + ". Avalie e compartilhe no Salbum.";
+        }),
+        image: computed(() => album.value?.image_url || null),
+        type: "music.album",
+      });
+
+      useJsonLd(computed(() => buildMusicAlbumSchema({
+        name: album.value!.name,
+        artists: album.value!.artists.map(a => ({ name: a.name })),
+        image_url: album.value!.image_url,
+        release_date: album.value!.release_date,
+        genres: album.value!.genres,
+        rate: album.value!.rate,
+        spotify_url: album.value!.spotify_url,
+        url: window.location.href,
+      })));
+    }
 
     if (!album.value.image_url || album.value.image_url.endsWith('/null')) {
       fetchAlbumImage(albumId)
@@ -85,6 +129,13 @@ onMounted(async () => {
     getAlbumReviews(albumId)
       .then((r) => {
         reviews.value = r;
+      })
+      .catch(() => {});
+
+    // Load quick reviews in the background
+    getQuickReviewsByAlbum(albumId)
+      .then((qr) => {
+        quickReviews.value = qr;
       })
       .catch(() => {});
   } catch (e) {
@@ -126,6 +177,92 @@ function shareTrack(music: FetchAlbumDetails["musics"][number]) {
 function onShared(comment: string) {
   console.log("MusicShare submitted:", shareTarget.value, comment);
   shareTarget.value = null;
+}
+
+// ─── Actions bottom sheet (mobile) ────────────────────────────────────────────
+const showActionsSheet = ref(false);
+
+// ─── Quick Review modal ──────────────────────────────────────────────────────
+const quickReviewTarget = ref<QuickReviewFormTarget | null>(null);
+const quickReviewToEdit = ref<QuickReviewDTO | null>(null);
+
+const userQuickReview = computed(() =>
+  quickReviews.value.find((qr) => qr.quickReview?.user?.id === auth.user?.id)?.quickReview ?? null,
+);
+
+const showQuickReviewForm = ref(false);
+
+function openQuickReviewForm() {
+  if (!album.value) return;
+  quickReviewTarget.value = {
+    targetType: 'ALBUM',
+    albumId: Number(album.value.id),
+    albumTitle: album.value.name,
+    albumCover: getCover(album.value.image_url) || null,
+    artistNames: artistNames.value,
+    tracks: album.value.musics.map((m) => ({
+      id: String(m.id),
+      name: m.name,
+      position: m.position,
+    })),
+  };
+  quickReviewToEdit.value = userQuickReview.value;
+  showQuickReviewForm.value = true;
+}
+
+function openQuickReviewFormForMusic(music: FetchAlbumDetails["musics"][number]) {
+  if (!album.value) return;
+  quickReviewTarget.value = {
+    targetType: 'MUSIC',
+    albumId: Number(album.value.id),
+    albumTitle: album.value.name,
+    albumCover: getCover(album.value.image_url) || null,
+    artistNames: artistNames.value,
+    musicId: Number(music.id),
+    musicName: music.name,
+    tracks: album.value.musics.map((m) => ({
+      id: String(m.id),
+      name: m.name,
+      position: m.position,
+    })),
+  };
+  quickReviewToEdit.value = null;
+  showQuickReviewForm.value = true;
+}
+
+function onQuickReviewSaved(_review: QuickReviewDTO) {
+  showQuickReviewForm.value = false;
+  quickReviewTarget.value = null;
+  quickReviewToEdit.value = null;
+  // Refresh list
+  const albumId = route.params.id as string;
+  getQuickReviewsByAlbum(albumId)
+    .then((qr) => {
+      quickReviews.value = qr;
+    })
+    .catch(() => {});
+}
+
+function onQuickReviewDeleted(id: number) {
+  quickReviews.value = quickReviews.value.filter((qr) => qr.quickReview?.id !== id);
+}
+
+function onQuickReviewEdit(review: QuickReviewDTO) {
+  if (!album.value) return;
+  quickReviewTarget.value = {
+    targetType: 'ALBUM',
+    albumId: Number(album.value.id),
+    albumTitle: album.value.name,
+    albumCover: getCover(album.value.image_url) || null,
+    artistNames: artistNames.value,
+    tracks: album.value.musics.map((m) => ({
+      id: String(m.id),
+      name: m.name,
+      position: m.position,
+    })),
+  };
+  quickReviewToEdit.value = review;
+  showQuickReviewForm.value = true;
 }
 
 const isSyncing = ref(false);
@@ -332,7 +469,19 @@ const sortedDiscs = computed(() => {
                   }}</span>
                 </div>
               </div>
-              <div class="flex items-center gap-2 sm:ml-auto flex-wrap">
+              <!-- Mobile: single action button -->
+              <div class="sm:hidden ml-auto">
+                <button
+                  @click="showActionsSheet = true"
+                  class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium bg-[var(--color-surface-2)] text-muted hover:text-white border border-[var(--color-border)] transition-all"
+                >
+                  <Menu class="w-4 h-4" />
+                  Ações
+                </button>
+              </div>
+
+              <!-- Desktop: organized button group -->
+              <div class="hidden sm:flex items-center gap-2 sm:ml-auto">
                 <button
                   @click="
                     hasAlbum(album.id)
@@ -357,26 +506,45 @@ const sortedDiscs = computed(() => {
                   <Share2 class="w-4 h-4" />
                   Compartilhar
                 </button>
-                <RouterLink
-                  :to="{ name: 'edit-album', params: { id: album.id } }"
-                  class="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium bg-[var(--color-surface-2)] text-muted hover:text-white border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-all"
+
+                <div class="w-px h-6 bg-[var(--color-border)] mx-1" />
+
+                <button
+                  @click="openQuickReviewForm"
+                  class="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium transition-all"
+                  :class="
+                    userQuickReview
+                      ? 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/25'
+                      : 'bg-[var(--color-surface-2)] text-muted hover:text-white border border-[var(--color-border)] hover:bg-[var(--color-surface)]'
+                  "
                 >
-                  <Pencil class="w-4 h-4" />
-                  Editar
-                </RouterLink>
+                  <Zap class="w-4 h-4" />
+                  {{ userQuickReview ? "Editar rápida" : "Avaliação rápida" }}
+                </button>
                 <RouterLink
                   :to="{ name: 'write-review', params: { id: album.id } }"
-                  class="btn-primary text-sm px-4 py-2"
+                  class="btn-primary text-sm px-4 py-2 flex items-center gap-2"
                 >
-                  Escrever review
+                  <PencilLine class="w-4 h-4" />
+                  Review
+                </RouterLink>
+
+                <div class="w-px h-6 bg-[var(--color-border)] mx-1" />
+
+                <RouterLink
+                  :to="{ name: 'edit-album', params: { id: album.id } }"
+                  class="flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-medium bg-[var(--color-surface-2)] text-muted hover:text-white border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-all"
+                >
+                  <Pencil class="w-3.5 h-3.5" />
+                  <span class="hidden xl:inline">Editar</span>
                 </RouterLink>
                 <button
                   @click="handleSyncAlbum"
                   :disabled="isSyncing"
-                  class="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium bg-[var(--color-surface-2)] text-muted hover:text-white border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-medium bg-[var(--color-surface-2)] text-muted hover:text-white border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RefreshCw :class="{'w-4 h-4': true, 'animate-spin': isSyncing}" />
-                  Sincronizar
+                  <span class="hidden xl:inline">Sincronizar</span>
                 </button>
               </div>
             </div>
@@ -393,73 +561,110 @@ const sortedDiscs = computed(() => {
     <!-- Conteúdo -->
     <div class="px-4 sm:px-8 pb-12 space-y-8 sm:space-y-10">
 
-
-      <!-- Tracklist -->
+      <!-- Tracklist + Artist Sidebar -->
       <section v-if="sortedDiscs.length > 0">
-        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <Music class="w-5 h-5 text-primary" />
-          Músicas
-        </h2>
-        <div class="space-y-6">
-          <div v-for="disc in sortedDiscs" :key="disc.discNumber">
-            <h3 v-if="sortedDiscs.length > 1" class="text-md font-semibold text-white mb-3 ml-1">
-              Disco {{ disc.discNumber }}
-            </h3>
-            <div class="card overflow-hidden">
-              <div class="divide-y divide-[var(--color-border)]">
-                <div
-                  v-for="music in disc.tracks"
-                  :key="music.id"
-                  class="flex items-center gap-4 px-5 py-3 hover:bg-[var(--color-surface-2)] transition-colors group"
-                >
-                  <span
-                    class="w-5 text-center text-xs text-muted font-mono flex-shrink-0"
-                  >
-                    {{ music.position }}
-                  </span>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-white truncate">
-                      {{ music.name }}
-                    </p>
-                    <p class="text-xs text-muted truncate">
-                      {{ music.artists.map((a) => a.name).join(", ") }}
-                    </p>
-                  </div>
-                  <div class="flex items-center gap-1 flex-shrink-0">
-                    <span class="text-xs text-muted font-mono mr-2">{{
-                      formatDuration(music.length)
-                    }}</span>
-                    <button
-                      @click="
-                        hasMusic(music.id)
-                          ? removeMusic(music.id)
-                          : addMusic(music.id)
-                      "
-                      class="w-7 h-7 flex items-center justify-center rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
-                      :class="
-                        hasMusic(music.id)
-                          ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
-                          : 'text-muted hover:text-white hover:bg-[var(--color-surface)]'
-                      "
-                      :title="hasMusic(music.id) ? 'Na lista' : 'Quero ouvir'"
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-8">
+          <!-- Tracklist column -->
+          <div>
+            <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Music class="w-5 h-5 text-primary" />
+              Músicas
+              <span class="text-muted font-normal text-base">({{ album.musics.length }})</span>
+            </h2>
+            <div class="space-y-6">
+              <div v-for="disc in sortedDiscs" :key="disc.discNumber">
+                <h3 v-if="sortedDiscs.length > 1" class="text-md font-semibold text-white mb-3 ml-1">
+                  Disco {{ disc.discNumber }}
+                </h3>
+                <div class="card overflow-hidden">
+                  <div class="divide-y divide-[var(--color-border)]">
+                    <div
+                      v-for="music in disc.tracks"
+                      :key="music.id"
+                      class="flex items-center gap-4 px-5 py-3 hover:bg-[var(--color-surface-2)] transition-colors group"
                     >
-                      <BookmarkCheck
-                        v-if="hasMusic(music.id)"
-                        class="w-3.5 h-3.5"
-                      />
-                      <BookmarkPlus v-else class="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      @click="shareTrack(music)"
-                      class="w-7 h-7 flex items-center justify-center rounded-lg text-muted hover:text-white hover:bg-[var(--color-surface)] transition-all sm:opacity-0 sm:group-hover:opacity-100"
-                      title="Compartilhar"
-                    >
-                      <Share2 class="w-3.5 h-3.5" />
-                    </button>
+                      <span
+                        class="w-5 text-center text-xs text-muted font-mono flex-shrink-0"
+                      >
+                        {{ music.position }}
+                      </span>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">
+                          {{ music.name }}
+                        </p>
+                        <p class="text-xs text-muted truncate">
+                          {{ music.artists.map((a) => a.name).join(", ") }}
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-1 flex-shrink-0">
+                        <span class="text-xs text-muted font-mono mr-2">{{
+                          formatDuration(music.length)
+                        }}</span>
+                        <button
+                          @click="
+                            hasMusic(music.id)
+                              ? removeMusic(music.id)
+                              : addMusic(music.id)
+                          "
+                          class="w-7 h-7 flex items-center justify-center rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                          :class="
+                            hasMusic(music.id)
+                              ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
+                              : 'text-muted hover:text-white hover:bg-[var(--color-surface)]'
+                          "
+                          :title="hasMusic(music.id) ? 'Na lista' : 'Quero ouvir'"
+                        >
+                          <BookmarkCheck
+                            v-if="hasMusic(music.id)"
+                            class="w-3.5 h-3.5"
+                          />
+                          <BookmarkPlus v-else class="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          @click="shareTrack(music)"
+                          class="w-7 h-7 flex items-center justify-center rounded-lg text-muted hover:text-white hover:bg-[var(--color-surface)] transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                          title="Compartilhar"
+                        >
+                          <Share2 class="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          @click="openQuickReviewFormForMusic(music)"
+                          class="w-7 h-7 flex items-center justify-center rounded-lg text-muted hover:text-yellow-400 hover:bg-[var(--color-surface)] transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                          title="Avaliação rápida"
+                        >
+                          <Zap class="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Artist sidebar -->
+          <div class="space-y-3">
+            <p class="text-xs font-semibold text-muted uppercase tracking-wider">Artistas</p>
+            <router-link
+              v-for="artist in album.artists"
+              :key="artist.id"
+              :to="{ name: 'artist-detail', params: { id: artist.id } }"
+              class="flex flex-col items-center gap-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 hover:border-[var(--color-muted)]/40 transition-colors text-center"
+            >
+              <div class="w-14 h-14 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center overflow-hidden">
+                <img
+                  v-if="artist.image_url && !artist.image_url.endsWith('/null')"
+                  :src="artist.image_url"
+                  :alt="artist.name"
+                  class="w-full h-full object-cover"
+                />
+                <User v-else class="w-6 h-6 text-muted" />
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-white truncate">{{ artist.name }}</p>
+                <p v-if="artist.country" class="text-xs text-muted truncate">{{ artist.country }}</p>
+              </div>
+            </router-link>
           </div>
         </div>
       </section>
@@ -538,8 +743,73 @@ const sortedDiscs = computed(() => {
           </RouterLink>
         </div>
       </section>
+
+      <!-- Quick Reviews -->
+      <section>
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <Zap class="w-5 h-5 text-yellow-400" />
+            Avaliações Rápidas
+            <span
+              v-if="quickReviews.length"
+              class="text-muted font-normal text-base ml-1"
+              >({{ quickReviews.length }})</span
+            >
+          </h2>
+          <button
+            @click="openQuickReviewForm"
+            class="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium transition-all"
+            :class="
+              userQuickReview
+                ? 'bg-secondary/15 text-secondary border border-secondary/30 hover:bg-secondary/25'
+                : 'bg-[var(--color-surface-2)] text-muted hover:text-white border border-[var(--color-border)] hover:bg-[var(--color-surface)]'
+            "
+          >
+            <Zap class="w-4 h-4" />
+            {{ userQuickReview ? "Editar avaliação" : "Avaliação rápida" }}
+          </button>
+        </div>
+
+        <!-- Quick Review list -->
+        <div v-if="quickReviews.length" class="space-y-4">
+          <QuickReviewCard
+            v-for="item in quickReviews"
+            :key="item.quickReview?.id"
+            :item="item"
+            @deleted="onQuickReviewDeleted"
+            @edit="onQuickReviewEdit"
+          />
+        </div>
+
+        <!-- Empty state -->
+        <div v-else class="flex flex-col items-center py-12 text-center">
+          <div
+            class="w-14 h-14 bg-[var(--color-surface)] rounded-3xl flex items-center justify-center mb-3"
+          >
+            <Zap class="w-7 h-7 text-muted" />
+          </div>
+          <p class="text-white font-semibold mb-1">Nenhuma avaliação rápida</p>
+          <p class="text-muted text-sm">
+            Avalie rapidamente com nota, sentimento e muito mais!
+          </p>
+          <button
+            @click="openQuickReviewForm"
+            class="btn-primary text-sm px-5 py-2 mt-4"
+          >
+            Fazer avaliação rápida
+          </button>
+        </div>
+      </section>
     </div>
   </div>
+
+  <QuickReviewForm
+    v-if="showQuickReviewForm && quickReviewTarget"
+    :target="quickReviewTarget"
+    :existing-review="quickReviewToEdit"
+    @close="showQuickReviewForm = false"
+    @saved="onQuickReviewSaved"
+  />
 
   <MusicShareModal
     v-if="shareTarget"
@@ -547,4 +817,138 @@ const sortedDiscs = computed(() => {
     @close="shareTarget = null"
     @shared="onShared"
   />
+
+  <!-- Mobile actions bottom sheet -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition-all duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-all duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="showActionsSheet"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 sm:hidden"
+        @click.self="showActionsSheet = false"
+      >
+        <Transition
+          enter-active-class="transition-all duration-300 ease-out"
+          enter-from-class="translate-y-full"
+          enter-to-class="translate-y-0"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="translate-y-0"
+          leave-to-class="translate-y-full"
+          appear
+        >
+          <div
+            v-if="showActionsSheet"
+            class="absolute bottom-0 left-0 right-0 bg-[var(--color-surface)] border-t border-[var(--color-border)] rounded-t-3xl shadow-2xl"
+          >
+            <!-- Handle -->
+            <div class="flex items-center justify-between px-6 pt-4 pb-2">
+              <div class="w-10 h-1 bg-[var(--color-border)] rounded-full mx-auto" />
+              <button
+                @click="showActionsSheet = false"
+                class="absolute right-4 top-4 w-8 h-8 flex items-center justify-center rounded-xl text-muted hover:text-white hover:bg-[var(--color-surface-2)] transition-all"
+              >
+                <X class="w-4 h-4" />
+              </button>
+            </div>
+
+            <div class="px-6 pb-8 space-y-6">
+              <p class="text-sm font-semibold text-white">Ações</p>
+
+              <!-- Review section -->
+              <div class="space-y-1">
+                <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1">Avaliar</p>
+                <button
+                  @click="openQuickReviewForm(); showActionsSheet = false"
+                  class="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-medium transition-colors"
+                  :class="
+                    userQuickReview
+                      ? 'bg-yellow-500/10 text-yellow-400'
+                      : 'text-white hover:bg-[var(--color-surface-2)]'
+                  "
+                >
+                  <Zap class="w-5 h-5" />
+                  <div class="text-left">
+                    <p>{{ userQuickReview ? "Editar avaliação rápida" : "Avaliação rápida" }}</p>
+                    <p class="text-xs text-muted font-normal">Nota, sentimento, foto</p>
+                  </div>
+                </button>
+                <RouterLink
+                  :to="{ name: 'write-review', params: { id: album!.id } }"
+                  @click="showActionsSheet = false"
+                  class="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-medium text-white hover:bg-[var(--color-surface-2)] transition-colors"
+                >
+                  <PencilLine class="w-5 h-5 text-primary" />
+                  <div class="text-left">
+                    <p>Review completa</p>
+                    <p class="text-xs text-muted font-normal">Música a música, sentimentos</p>
+                  </div>
+                </RouterLink>
+              </div>
+
+              <div class="h-px bg-[var(--color-border)]" />
+
+              <!-- Actions section -->
+              <div class="space-y-1">
+                <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1">Ações</p>
+                <button
+                  @click="
+                    hasAlbum(album!.id)
+                      ? removeAlbum(album!.id)
+                      : addAlbum(album!.id);
+                    showActionsSheet = false
+                  "
+                  class="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-medium transition-colors"
+                  :class="
+                    hasAlbum(album!.id)
+                      ? 'text-secondary'
+                      : 'text-white hover:bg-[var(--color-surface-2)]'
+                  "
+                >
+                  <BookmarkCheck v-if="hasAlbum(album!.id)" class="w-5 h-5" />
+                  <BookmarkPlus v-else class="w-5 h-5" />
+                  {{ hasAlbum(album!.id) ? "Remover da lista" : "Quero ouvir" }}
+                </button>
+                <button
+                  @click="shareAlbum(); showActionsSheet = false"
+                  class="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-medium text-white hover:bg-[var(--color-surface-2)] transition-colors"
+                >
+                  <Share2 class="w-5 h-5" />
+                  Compartilhar
+                </button>
+              </div>
+
+              <div class="h-px bg-[var(--color-border)]" />
+
+              <!-- Admin section -->
+              <div class="space-y-1">
+                <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1">Outros</p>
+                <RouterLink
+                  :to="{ name: 'edit-album', params: { id: album!.id } }"
+                  @click="showActionsSheet = false"
+                  class="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-medium text-white hover:bg-[var(--color-surface-2)] transition-colors"
+                >
+                  <Pencil class="w-5 h-5 text-muted" />
+                  Editar álbum
+                </RouterLink>
+                <button
+                  @click="handleSyncAlbum(); showActionsSheet = false"
+                  :disabled="isSyncing"
+                  class="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-medium text-white hover:bg-[var(--color-surface-2)] transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw :class="{'w-5 h-5': true, 'animate-spin': isSyncing}" />
+                  Sincronizar dados
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
