@@ -13,6 +13,7 @@ import {
   Loader2,
   Heart,
   ExternalLink,
+  Zap,
 } from "lucide-vue-next";
 import type { ActivityItemDTO } from "../types";
 import AppImage from "./AppImage.vue";
@@ -25,6 +26,11 @@ import {
   likeMusicShare,
   unlikeMusicShare,
 } from "../services/musicShareService";
+import {
+  likeQuickReview,
+  unlikeQuickReview,
+  deleteQuickReview,
+} from "../services/quickReviewService";
 
 const props = defineProps<{ item: ActivityItemDTO }>();
 const emit = defineEmits<{ (e: "deleted", id: string): void }>();
@@ -36,10 +42,12 @@ const isReview = computed(
   () => props.item.type === "REVIEW" || props.item.type === "RATING",
 );
 const isShare = computed(() => props.item.type === "MUSIC_SHARE");
+const isQuickReview = computed(() => props.item.type === "QUICK_REVIEW");
 
 const review = computed(() => props.item.review);
 const shareFull = computed(() => props.item.musicShare);
 const share = computed(() => shareFull.value?.musicShare ?? null);
+const quickReview = computed(() => props.item.quickReview?.quickReview ?? null);
 
 const shareTitle = computed(() => {
   const s = share.value;
@@ -53,7 +61,7 @@ const shareTitle = computed(() => {
 const shareSubtitle = computed(() => {
   const s = share.value;
   if (!s) return "";
-  if (s.music) return s.music.album?.name ?? "";
+  if (s.music) return (s.music.album?.name ?? "") + " • " + s.music.album?.artists?.map((a) => a.name).join(", ");
   if (s.album) return s.album.artists?.map((a) => a.name).join(", ") ?? "";
   if (s.artist) return s.artist.country ?? "";
   return "";
@@ -94,7 +102,9 @@ const shareInitial = computed(() => {
 
 const user = computed(() => {
   if (isReview.value) return review.value?.review.user;
-  return share.value?.user;
+  if (isShare.value) return share.value?.user;
+  if (isQuickReview.value) return quickReview.value?.user;
+  return null;
 });
 
 const formattedDate = computed(() =>
@@ -130,7 +140,9 @@ function startEdit() {
   closeMenu();
   editText.value = isReview.value
     ? (review.value?.review.content ?? "")
-    : (share.value?.comment ?? "");
+    : isShare.value
+      ? (share.value?.comment ?? "")
+      : (quickReview.value?.considerations ?? "");
   editing.value = true;
   editError.value = null;
 }
@@ -165,6 +177,8 @@ async function saveEdit() {
     } else if (isShare.value && share.value) {
       await updateMusicShare(share.value.id, editText.value);
       localComment.value = editText.value;
+    } else if (isQuickReview.value && quickReview.value) {
+      // Quick review editing via API not supported in feed context
     }
     editing.value = false;
   } catch {
@@ -185,6 +199,9 @@ async function confirmDelete() {
     } else if (isShare.value && share.value) {
       await deleteMusicShare(share.value.id);
       emit("deleted", share.value.id);
+    } else if (isQuickReview.value && quickReview.value) {
+      await deleteQuickReview(String(quickReview.value.id));
+      emit("deleted", String(quickReview.value.id));
     }
   } catch {
     deleting.value = false;
@@ -194,12 +211,16 @@ async function confirmDelete() {
 const liked = ref(
   isReview.value
     ? (props.item.review?.likedByCurrentUser ?? false)
-    : (props.item.musicShare?.likedByCurrentUser ?? false)
+    : isShare.value
+      ? (props.item.musicShare?.likedByCurrentUser ?? false)
+      : (props.item.quickReview?.likedByCurrentUser ?? false)
 );
 const likeCount = ref(
   isReview.value
     ? (props.item.review?.likeCount ?? 0)
-    : (props.item.musicShare?.likeCount ?? 0)
+    : isShare.value
+      ? (props.item.musicShare?.likeCount ?? 0)
+      : (props.item.quickReview?.likeCount ?? 0)
 );
 const liking = ref(false);
 
@@ -240,6 +261,23 @@ async function toggleLike() {
     } finally {
       liking.value = false;
     }
+  } else if (isQuickReview.value && quickReview.value) {
+    liking.value = true;
+    try {
+      if (liked.value) {
+        await unlikeQuickReview(String(quickReview.value.id));
+        liked.value = false;
+        likeCount.value--;
+      } else {
+        await likeQuickReview(String(quickReview.value.id));
+        liked.value = true;
+        likeCount.value++;
+      }
+    } catch {
+      // silently ignore
+    } finally {
+      liking.value = false;
+    }
   }
 }
 
@@ -249,6 +287,8 @@ function onCardClick() {
     router.push({ name: 'review-detail', params: { id: review.value.review.id } });
   } else if (isShare.value && share.value) {
     router.push({ name: 'share-detail', params: { id: share.value.id } });
+  } else if (isQuickReview.value && quickReview.value) {
+    router.push({ name: 'quick-review-detail', params: { id: String(quickReview.value.id) } });
   }
 }
 </script>
@@ -313,12 +353,15 @@ function onCardClick() {
         :class="
           isReview
             ? 'bg-primary/10 text-primary border-primary/20'
-            : 'bg-secondary/10 text-secondary border-secondary/20'
+            : isShare
+              ? 'bg-secondary/10 text-secondary border-secondary/20'
+              : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
         "
       >
         <MessageSquare v-if="isReview" class="w-2.5 h-2.5 flex-shrink-0" />
-        <Share2 v-else class="w-2.5 h-2.5 flex-shrink-0" />
-        {{ isReview ? "Review" : "Compartilhou" }}
+        <Share2 v-else-if="isShare" class="w-2.5 h-2.5 flex-shrink-0" />
+        <Zap v-else class="w-2.5 h-2.5 flex-shrink-0" />
+        {{ isReview ? "Review" : isShare ? "Compartilhou" : "Quick Review" }}
       </span>
 
       <div v-if="isOwner" class="relative flex-shrink-0" @click.stop>
@@ -473,6 +516,108 @@ function onCardClick() {
         <span class="flex items-center gap-1.5 text-xs text-muted">
           <MessageSquare class="w-3.5 h-3.5" />
           {{ review.commentCount }}
+        </span>
+      </div>
+    </template>
+
+    <template v-if="isQuickReview && quickReview">
+      <!-- Album -->
+      <RouterLink
+        v-if="quickReview.album"
+        :to="{ name: 'album-detail', params: { id: quickReview.album.id } }"
+        class="flex items-center gap-2 p-2 rounded-xl bg-[var(--color-surface-2)] hover:bg-[var(--color-surface)] transition-colors group overflow-hidden"
+        @click.stop
+      >
+        <div class="w-9 h-9 flex-shrink-0 aspect-square">
+          <AppImage
+            :src="quickReview.album.image_url ?? ''"
+            :alt="quickReview.album.name"
+            type="album"
+            :initial="quickReview.album.name?.charAt(0).toUpperCase() ?? '?'"
+            rounded="lg"
+            class="w-full h-full"
+          />
+        </div>
+        <div class="flex-1 min-w-0 overflow-hidden">
+          <p class="text-xs font-semibold text-white truncate group-hover:text-primary transition-colors">
+            {{ quickReview.album.name }}
+          </p>
+          <p v-if="quickReview.album.artists?.length" class="text-[11px] text-muted truncate">
+            {{ quickReview.album.artists.map(a => a.name).join(', ') }}
+          </p>
+        </div>
+      </RouterLink>
+
+      <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1">
+          <Star
+            v-for="i in 5"
+            :key="i"
+            class="w-3.5 h-3.5"
+            :class="i <= quickReview.score ? 'text-yellow-400' : 'text-muted/30'"
+          />
+        </div>
+        <span class="text-xs text-muted ml-1">{{ quickReview.score }}/5</span>
+      </div>
+
+      <!-- Sentiment badge -->
+      <div v-if="quickReview.sentiment" class="flex items-center gap-2">
+        <span
+          class="text-xs font-medium px-3 py-1 rounded-full border bg-primary/10 border-primary/25 text-primary"
+        >
+          {{ quickReview.sentiment }}
+        </span>
+      </div>
+
+      <!-- Photo -->
+      <div v-if="quickReview.photoUrl" class="rounded-2xl overflow-hidden">
+        <img
+          :src="quickReview.photoUrl"
+          alt="Quick review photo"
+          class="w-full max-h-64 object-cover"
+        />
+      </div>
+
+      <!-- Favorite track -->
+      <div
+      v-if="quickReview.favoriteTrack"
+      class="bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-2xl p-3"
+    >
+      <p class="text-xs text-muted font-medium mb-1">Faixa favorita</p>
+      <p class="text-xs text-white font-semibold">
+        {{ quickReview.favoriteTrack.name }}
+      </p>
+        <p v-if="quickReview.favoriteTrackComment" class="text-xs text-muted mt-1">
+          {{ quickReview.favoriteTrackComment }}
+        </p>
+      </div>
+
+      <!-- Considerations -->
+      <p
+        v-if="quickReview.considerations"
+        class="text-xs text-[var(--color-text)] leading-relaxed line-clamp-2"
+      >
+        {{ quickReview.considerations }}
+      </p>
+
+      <div
+        v-if="!editing"
+        class="flex items-center justify-between pt-1 border-t border-[var(--color-border)] mt-2"
+        @click.stop
+      >
+        <button
+          @click.stop="toggleLike"
+          class="flex items-center gap-1.5 text-xs transition-colors"
+          :class="liked ? 'text-red-400' : 'text-muted hover:text-red-400'"
+          :disabled="liking"
+        >
+          <Heart class="w-4 h-4" :fill="liked ? 'currentColor' : 'none'" />
+          {{ likeCount }}
+        </button>
+
+        <span class="flex items-center gap-1.5 text-xs text-muted">
+          <MessageSquare class="w-3.5 h-3.5" />
+          {{ props.item.quickReview?.commentCount ?? 0 }}
         </span>
       </div>
     </template>
