@@ -44,6 +44,55 @@ function openPicker() {
   fileInput.value?.click();
 }
 
+function compressImage(file: File, maxWidth = 1080, maxHeight = 1080, quality = 0.8): Promise<File> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(file);
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return resolve(file);
+            const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+              type: "image/webp",
+              lastModified: Date.now(),
+            });
+            resolve(newFile);
+          },
+          "image/webp",
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 async function onFileChange(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
@@ -53,9 +102,9 @@ async function onFileChange(e: Event) {
     uploadError.value = "Selecione um arquivo de imagem válido.";
     return;
   }
-  // Validate size (max 5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    uploadError.value = "Imagem muito grande. Máximo 5 MB.";
+  // Validate size (max 20MB to prevent browser memory issues)
+  if (file.size > 20 * 1024 * 1024) {
+    uploadError.value = "Imagem muito grande. O limite máximo é 20 MB.";
     return;
   }
 
@@ -71,7 +120,8 @@ async function onFileChange(e: Event) {
   uploadDone.value = false;
 
   try {
-    const resultUrl = await props.onUpload(file);
+    const optimizedFile = await compressImage(file);
+    const resultUrl = await props.onUpload(optimizedFile);
     uploadDone.value = true;
     emit("uploaded", resultUrl);
   } catch (err) {
@@ -147,7 +197,7 @@ async function onFileChange(e: Event) {
           }}
         </button>
 
-        <p class="text-[11px] text-muted">JPG, PNG ou WEBP · máx. 5 MB</p>
+        <p class="text-[11px] text-muted">A imagem será otimizada automaticamente</p>
 
         <p
           v-if="uploadError"

@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Star, Loader2, AlertCircle, Heart, ExternalLink, MessageSquare } from 'lucide-vue-next'
 import { getReview, likeReview, unlikeReview } from '../services/reviewService'
+import { useSeoMeta } from '../composables/useSeoMeta'
+import { useJsonLd, buildReviewSchema } from '../composables/useJsonLd'
 import type { FullReviewDTO } from '../types'
 import AppImage from '../components/AppImage.vue'
 import EmotionChart from '../components/review/EmotionChart.vue'
@@ -35,6 +37,35 @@ onMounted(async () => {
         const id = route.params.id as string
         review.value = await getReview(id)
         localCommentCount.value = review.value.commentCount
+
+        // SEO meta after data loads
+        if (review.value) {
+            const artistNames = review.value.review.album.artists?.map(a => a.name).join(", ") ?? ""
+            useSeoMeta({
+                title: computed(() => `Review de ${review.value?.review.user.username} sobre ${review.value?.review.album.name}`),
+                description: computed(() => {
+                    const r = review.value?.review
+                    if (!r) return ""
+                    const parts = [`${r.user.username} avaliou ${r.album.name}`]
+                    if (artistNames) parts[0] += ` por ${artistNames}`
+                    if (r.albumScore != null) parts.push(`Nota: ${r.albumScore}/100`)
+                    if (r.content) parts.push(r.content.slice(0, 155))
+                    return parts.join(". ")
+                }),
+                image: computed(() => review.value?.review.album.image_url || null),
+                type: "article",
+            })
+
+            useJsonLd(computed(() => buildReviewSchema({
+                author: review.value!.review.user.username,
+                albumName: review.value!.review.album.name,
+                artists: review.value!.review.album.artists?.map(a => a.name) ?? [],
+                content: review.value!.review.content,
+                score: review.value!.review.albumScore,
+                datePublished: review.value!.review.createdAt,
+                url: window.location.href,
+            })))
+        }
     } catch (e) {
         error.value = e instanceof Error ? e.message : 'Erro ao carregar review'
     } finally {

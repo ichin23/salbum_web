@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { Home, Search, User, ListMusic } from 'lucide-vue-next'
+import { Home, Search, User, ListMusic, Bell } from 'lucide-vue-next'
+import { useNotificationsStore } from '../../stores/notifications'
+
+const notificationsStore = useNotificationsStore()
 
 const navItems = [
   { name: 'Início', icon: Home, route: '/' },
   { name: 'Buscar', icon: Search, route: '/search' },
+  { name: 'Notificações', icon: Bell, route: '/notifications' },
   { name: 'Lista', icon: ListMusic, route: '/lists' },
   { name: 'Perfil', icon: User, route: '/profile' },
 ]
@@ -22,11 +26,17 @@ const navItems = [
           : 'text-muted hover:text-white'
       ]"
     >
-      <component
-        :is="item.icon"
-        class="w-5 h-5 transition-transform duration-200"
-        :class="$route.path === item.route ? 'scale-110' : ''"
-      />
+      <div class="relative flex items-center justify-center">
+        <component
+          :is="item.icon"
+          class="w-5 h-5 transition-transform duration-200"
+          :class="$route.path === item.route ? 'scale-110' : ''"
+        />
+        <div 
+          v-if="item.route === '/notifications' && notificationsStore.hasUnread" 
+          class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-[var(--color-surface)]"
+        ></div>
+      </div>
       <span class="text-[10px] font-medium truncate">{{ item.name }}</span>
     </RouterLink>
   </nav>

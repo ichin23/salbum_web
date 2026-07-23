@@ -15,6 +15,8 @@ import {
   Pencil,
 } from "lucide-vue-next";
 import { fetchArtistDetails, syncArtist } from "../services/fetchService";
+import { useSeoMeta } from "../composables/useSeoMeta";
+import { useJsonLd, buildPersonSchema } from "../composables/useJsonLd";
 import type { FetchArtistDetails, FetchAlbum } from "../types";
 import MusicShareModal from "../components/share/MusicShareModal.vue";
 import type { ShareTarget } from "../components/share/MusicShareModal.vue";
@@ -46,6 +48,29 @@ onMounted(async () => {
     artist.value =
       (data as { artist?: FetchArtistDetails }).artist ??
       (data as unknown as FetchArtistDetails);
+
+    // SEO meta after data loads
+    if (artist.value) {
+      useSeoMeta({
+        title: computed(() => artist.value?.name ?? "Artista"),
+        description: computed(() => {
+          const a = artist.value;
+          if (!a) return "";
+          const parts = [`${a.name}`];
+          if (a.country) parts[0] += ` (${a.country})`;
+          if (a.albums?.length) parts.push(`${a.albums.length} álbuns na discografia`);
+          return parts.join(". ") + ". Veja reviews e avaliações no Salbum.";
+        }),
+        image: computed(() => artist.value?.image_url || null),
+        type: "profile",
+      })
+
+      useJsonLd(computed(() => buildPersonSchema({
+        name: artist.value!.name,
+        image: artist.value!.image_url,
+        url: window.location.href,
+      })))
+    }
 
     if (artist.value?.mbid && artist.value?.albums && artist.value.albums.length <= 7) {
       handleSyncArtist();
