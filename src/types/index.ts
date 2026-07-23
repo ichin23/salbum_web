@@ -365,13 +365,14 @@ export interface MusicShareDTO {
 
 /**
  * ActivityItemDTO — single item from GET /activity/feed
- * type: "REVIEW" | "MUSIC_SHARE" ("RATING" treated as REVIEW)
+ * type: "REVIEW" | "MUSIC_SHARE" | "QUICK_REVIEW" ("RATING" treated as REVIEW)
  */
 export interface ActivityItemDTO {
-    type: 'REVIEW' | 'RATING' | 'MUSIC_SHARE'
+    type: 'REVIEW' | 'RATING' | 'MUSIC_SHARE' | 'QUICK_REVIEW'
     timestamp: string          // Instant → ISO-8601 string
     review: FullReviewInfoDTO | null
     musicShare: FullMusicShareDTO | null
+    quickReview: FullQuickReviewDTO | null
 }
 
 /** GET /activity/feed response */
@@ -385,6 +386,7 @@ export interface FeedResponseDTO {
 export interface UserActivityResponseDTO {
     reviews: FullReviewInfoDTO[]
     music_shares: MusicShareDTO[]
+    quick_reviews: QuickReviewDTO[]
 }
 
 /** UserDTO — returned by /users/me, /users/{id}, /users/search, followers/following lists */
@@ -422,6 +424,66 @@ export interface FullMusicShareDTO {
     likeCount: number
     likedByCurrentUser: boolean
     commentCount: number
+}
+
+// ─── QuickReview ───────────────────────────────────────────────────────────────
+export type QuickReviewTargetType = 'ALBUM' | 'MUSIC'
+
+export interface QuickReviewFeelingOption {
+    value: string
+    label: string
+    category: string
+}
+
+export interface QuickReviewDTO {
+    id: number
+    user: UserInfoDTO
+    targetType: QuickReviewTargetType
+    album: AlbumInfoDTO | null
+    music: MusicInfoDTO | null
+    score: number
+    sentiment: string
+    photoUrl: string | null
+    favoriteTrack: MusicInfoDTO | null
+    favoriteTrackComment: string | null
+    considerations: string | null
+    createdAt: string
+    updatedAt: string | null
+}
+
+export interface FullQuickReviewDTO {
+    quickReview: QuickReviewDTO
+    likeCount: number
+    likedByCurrentUser: boolean
+    commentCount: number
+}
+
+export interface CreateQuickReviewRequest {
+    targetType: QuickReviewTargetType
+    albumId?: number
+    musicId?: number
+    score: number
+    sentiment: string
+    photoUrl?: string | null
+    favoriteTrackId?: number | null
+    favoriteTrackComment?: string | null
+    considerations?: string | null
+}
+
+export interface UpdateQuickReviewRequest {
+    score?: number
+    sentiment?: string
+    photoUrl?: string | null
+    favoriteTrackId?: number | null
+    favoriteTrackComment?: string | null
+    considerations?: string | null
+}
+
+export interface QuickReviewCommentDTO {
+    id: number
+    user: UserInfoDTO
+    content: string
+    createdAt: string
 }
 
 // ─── User Profile ─────────────────────────────────────────────────────────────

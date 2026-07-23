@@ -4,16 +4,18 @@ import type { FeedResponseDTO, UserActivityResponseDTO, ActivityItemDTO } from '
 export interface ActivityFeedParams {
     limit?: number
     cursor?: string   // ISO-8601 timestamp string
+    onlyFollowing?: boolean
 }
 
 /**
  * GET /activity/feed
- * Returns paginated ActivityItemDTO list from users the authenticated user follows.
+ * Returns paginated ActivityItemDTO list from users the authenticated user follows or all users.
  */
 export async function getActivityFeed(params: ActivityFeedParams = {}): Promise<FeedResponseDTO> {
     const qs = new URLSearchParams()
     if (params.limit) qs.set('limit', String(params.limit))
     if (params.cursor) qs.set('cursor', params.cursor)
+    if (params.onlyFollowing !== undefined) qs.set('onlyFollowing', String(params.onlyFollowing))
 
     const query = qs.toString() ? `?${qs.toString()}` : ''
     const raw = await apiRequest<FeedResponseDTO>(`/activity/feed${query}`)
@@ -37,6 +39,7 @@ export async function getUserActivityFeed(userId: string): Promise<ActivityItemD
         timestamp: r.review.createdAt,
         review: r,
         musicShare: null,
+        quickReview: null,
     }))
 
     const shareItems: ActivityItemDTO[] = (raw.music_shares ?? []).map(s => ({
@@ -49,9 +52,23 @@ export async function getUserActivityFeed(userId: string): Promise<ActivityItemD
             likedByCurrentUser: false,
             commentCount: 0
         },
+        quickReview: null,
     }))
 
-    return [...reviewItems, ...shareItems].sort(
+    const quickReviewItems: ActivityItemDTO[] = (raw.quick_reviews ?? []).map(q => ({
+        type: 'QUICK_REVIEW' as const,
+        timestamp: q.createdAt,
+        review: null,
+        musicShare: null,
+        quickReview: {
+            quickReview: q,
+            likeCount: 0,
+            likedByCurrentUser: false,
+            commentCount: 0,
+        },
+    }))
+
+    return [...reviewItems, ...shareItems, ...quickReviewItems].sort(
         (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     )
 }

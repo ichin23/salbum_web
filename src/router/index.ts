@@ -59,6 +59,11 @@ const router = createRouter({
                     component: () => import('../views/SearchView.vue'),
                 },
                 {
+                    path: 'notifications',
+                    name: 'notifications',
+                    component: () => import('../views/NotificationsView.vue'),
+                },
+                {
                     path: 'album/:id',
                     name: 'album-detail',
                     component: () => import('../views/AlbumDetailView.vue'),
@@ -117,6 +122,11 @@ const router = createRouter({
                     path: 'artist/:id/edit',
                     name: 'edit-artist',
                     component: () => import('../views/EditArtistView.vue'),
+                },
+                {
+                    path: 'quick-reviews/:id',
+                    name: 'quick-review-detail',
+                    component: () => import('../views/QuickReviewDetailView.vue'),
                 },
                 {
                     path: 'user/:id',
