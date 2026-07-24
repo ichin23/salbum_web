@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Teste - API & WebSocket</title>
+    <!-- Importa a biblioteca STOMP oficial via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f6f9; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .status { font-weight: bold; padding: 6px 12px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
+        .disconnected { background: #ffebee; color: #c62828; }
+        .connected { background: #e8f5e9; color: #2e7d32; }
+        button { background: #3498db; color: white; border: none; padding: 10px 16px; font-size: 14px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #2980b9; }
+        #log { background: #2c3e50; color: #ecf0f1; font-family: monospace; padding: 15px; border-radius: 4px; max-height: 250px; overflow-y: auto; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+    <h1>Testador de Infraestrutura de Notificações</h1>
+
+    <!-- CARD 1: TESTE DA API HTTP (MÉTRICAS) -->
+    <div class="card">
+        <h2>1. Testar Endpoint HTTP (Métricas de Conexão)</h2>
+        <p>Verifica o total de conexões ativas cadastradas no backend via requisição HTTP tradicional.</p>
+        <button onclick="verificarMetricasHTTP()">Atualizar Contagem via HTTP</button>
+        <p><strong>Conexões ativas reportadas pela API:</strong> <span id="http-count">---</span></p>
+    </div>
+
+    <!-- CARD 2: TESTE DO WEBSOCKET STOMP -->
+    <div class="card">
+        <h2>2. Testar Conexão WebSocket (STOMP)</h2>
+        <div id="ws-status-badge" class="status disconnected">Desconectado</div>
+        <div>
+            <button id="btn-connect" onclick="conectarWebSocket()">Conectar WebSocket</button>
+            <button id="btn-disconnect" onclick="desconectarWebSocket()" style="background: #e74c3c; display: none;">Desconectar</button>
+        </div>
+    </div>
+
+    <!-- CARD 3: LOGS EM TEMPO REAL -->
+    <div class="card">
+        <h2>Logs de Eventos</h2>
+        <div id="log">Aguardando ações...</div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO: Altere para o endereço do seu backend (localhost ou IP da Oracle Cloud)
+        const API_BASE_URL = "http://localhost:8080"; 
+        const WS_BASE_URL = "ws://localhost:8080"; 
+
+        let stompClient = null;
+
+        function adicionarLog(mensagem) {
+            const logDiv = document.getElementById("log");
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerText += `\n[${timestamp}] ${mensagem}`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // --- TESTE HTTP ---
+        async function verificarMetricasHTTP() {
+            adicionarLog("Solicitando contagem de conexões via HTTP...");
+            try {
+                // Ajuste a URL caso tenha colocado segurança /api/admin/metrics/...
+                const resposta = await fetch(`${API_BASE_URL}/api/admin/metrics/ws-count`);
+                if (!resposta.ok) throw new Error(`Status: ${resposta.status}`);
+                
+                const contagem = await resposta.json();
+                document.getElementById("http-count").innerText = contagem;
+                adicionarLog(`Sucesso HTTP! Conexões no servidor: ${contagem}`);
+            } catch (erro) {
+                adicionarLog(`Erro HTTP: ${erro.message}. Verifique se o CORS está liberado no Spring Boot ou se a URL está correta.`);
+            }
+        }
+
+        // --- TESTE WEBSOCKET STOMP ---
+        function conectarWebSocket() {
+            if (stompClient && stompClient.connected) {
+                adicionarLog("Já está conectado.");
+                return;
+            }
+
+            adicionarLog("Iniciando tentativa de conexão STOMP...");
+            
+            // Instancia o cliente STOMP apontando para o endpoint configurado no registerStompEndpoints()
+            stompClient = new StompJs.Client({
+                brokerURL: `${WS_BASE_URL}/ws-notifications`,
+                connectHeaders: {
+                    // Se tiver autenticação JWT pronta no interceptor do Spring, passe o token aqui:
+                    // "Authorization": "Bearer SEU_TOKEN_AQUI"
+                },
+                debug: function (str) {
+                    // Captura o tráfego interno dos frames STOMP (PING, PONG, CONNECT, etc)
+                    adicionarLog(`[STOMP Debug] ${str.trim()}`);
+                },
+                reconnectDelay: 5000, // Tenta reconectar a cada 5 segundos se cair
+                heartbeatIncoming: 10000,
+                heartbeatOutgoing: 10000
+            });
+
+            stompClient.onConnect = function (frame) {
+                adicionarLog("CONECTADO ao Broker STOMP com sucesso!");
+                atualizarInterfaceSubida(true);
+
+                // Exemplo de Inscrição em canal público de novos posts/likes
+                stompClient.subscribe('/topic/likes', function (mensagem) {
+                    adicionarLog(`[NOTIFICAÇÃO RECEBIDA NO TÓPICO]: ${mensagem.body}`);
+                });
+
+                // Exemplo de Inscrição em canal privado do usuário logado (User Destination)
+                // Para funcionar perfeitamente, o Spring precisa reconhecer a sessão/usuário autenticado
+                stompClient.subscribe('/user/queue/notifications', function (mensagem) {
+                    adicionarLog(`[NOTIFICAÇÃO PRIVADA RECEBIDA]: ${mensagem.body}`);
+                });
+            };
+
+            stompClient.onStompError = function (frame) {
+                adicionarLog(`Erro no Broker STOMP: ${frame.headers['message']}`);
+                adicionarLog(`Detalhes: ${frame.body}`);
+                atualizarInterfaceSubida(false);
+            };
+
+            stompClient.onWebSocketClose = function () {
+                adicionarLog("Conexão WebSocket fechada.");
+                atualizarInterfaceSubida(false);
+            };
+
+            stompClient.activate(); // Ativa a conexão de fato
+        }
+
+        function dseconectarWebSocket() {
+            if (stompClient) {
+                adicionarLog("Encerrando conexão propositalmente...");
+                stompClient.deactivate();
+            }
+        }
+
+        function atualizarInterfaceSubida(estaConectado) {
+            const badge = document.getElementById("ws-status-badge");
+            const btnConnect = document.getElementById("btn-connect");
+            const btnDisconnect = document.getElementById("btn-disconnect");
+
+            if (estaConectado) {
+                badge.innerText = "Conectado";
+                badge.className = "status connected";
+                btnConnect.style.display = "none";
+                btnDisconnect.style.style = "inline-block";
+            } else {
+                badge.innerText = "Desconectado";
+                badge.className = "status disconnected";
+                btnConnect.style.display = "inline-block";
+                btnDisconnect.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

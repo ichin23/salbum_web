@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
     ArrowLeft,
@@ -11,12 +11,16 @@ import {
     Pencil,
     Trash2,
     MoreHorizontal,
+    Share2,
 } from 'lucide-vue-next'
 import { getQuickReviewById, likeQuickReview, unlikeQuickReview, deleteQuickReview } from '../services/quickReviewService'
 import type { FullQuickReviewDTO, QuickReviewDTO } from '../types'
 import AppImage from '../components/AppImage.vue'
 import QuickReviewComments from '../components/review/QuickReviewComments.vue'
 import QuickReviewForm from '../components/review/QuickReviewForm.vue'
+import ShareImageLayout from '../components/ShareImageLayout.vue'
+import ShareImageModal from '../components/ShareImageModal.vue'
+import { useShareImage } from '../composables/useShareImage'
 import type { QuickReviewFormTarget } from '../components/review/QuickReviewForm.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -125,6 +129,41 @@ const menuOpen = ref(false)
 
 function toggleMenu() {
     menuOpen.value = !menuOpen.value
+}
+
+const showShareModal = ref(false)
+const shareLayoutRef = ref<InstanceType<typeof ShareImageLayout> | null>(null)
+const shareBackground = ref<'cartaz' | 'fita' | 'estudio'>('cartaz')
+const { state: shareState, setElement, generate, reset } = useShareImage(2)
+const shareBlob = computed(() => shareState.value.blob)
+const shareQuickReviewData = computed(() => {
+  if (!item.value) return null
+  return item.value
+})
+
+async function openShareImage() {
+  shareBackground.value = 'cartaz'
+  showShareModal.value = true
+  await generateShareImage()
+}
+
+async function generateShareImage() {
+  reset()
+  await nextTick()
+  if (shareLayoutRef.value?.$el) {
+    setElement(shareLayoutRef.value.$el as HTMLElement)
+  }
+  await generate()
+}
+
+function onShareBackgroundChange(val: 'cartaz' | 'fita' | 'estudio') {
+  shareBackground.value = val
+  generateShareImage()
+}
+
+function onShareModalClose() {
+  showShareModal.value = false
+  reset()
 }
 </script>
 
@@ -270,14 +309,42 @@ function toggleMenu() {
         </button>
 
         <button
-          @click="showComments = !showComments"
-          class="flex items-center gap-1.5 text-sm text-muted hover:text-white transition-colors"
-        >
-          <MessageSquare class="w-4 h-4" />
-          {{ item!.commentCount }}
-        </button>
+            @click="showComments = !showComments"
+            class="flex items-center gap-1.5 text-sm text-muted hover:text-white transition-colors"
+          >
+            <MessageSquare class="w-4 h-4" />
+            {{ item!.commentCount }}
+          </button>
+          <button
+            @click="openShareImage"
+            class="flex items-center gap-1.5 text-sm text-muted hover:text-primary transition-colors ml-auto"
+            title="Compartilhar como imagem"
+          >
+            <Share2 class="w-4 h-4" />
+          </button>
       </div>
     </div>
+
+    <!-- Hidden share image layout -->
+    <div style="position: fixed; left: -9999px; top: 0; width: 1080px; height: 1350px; pointer-events: none; z-index: -1;">
+      <ShareImageLayout
+        ref="shareLayoutRef"
+        post-type="quick_review"
+        :review="null"
+        :quick-review="shareQuickReviewData"
+        :music-share="null"
+        :background="shareBackground"
+      />
+    </div>
+
+    <ShareImageModal
+      :show="showShareModal"
+      :state="shareState"
+      :blob="shareBlob"
+      :background="shareBackground"
+      @close="onShareModalClose"
+      @update:background="onShareBackgroundChange"
+    />
 
     <!-- Comments -->
     <QuickReviewComments

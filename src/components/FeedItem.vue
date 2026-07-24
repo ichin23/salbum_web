@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, nextTick } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import {
   Star,
@@ -31,6 +31,9 @@ import {
   unlikeQuickReview,
   deleteQuickReview,
 } from "../services/quickReviewService";
+import ShareImageModal from "./ShareImageModal.vue";
+import ShareImageLayout from "./ShareImageLayout.vue";
+import { useShareImage } from "../composables/useShareImage";
 
 const props = defineProps<{ item: ActivityItemDTO }>();
 const emit = defineEmits<{ (e: "deleted", id: string): void }>();
@@ -128,6 +131,43 @@ const editError = ref<string | null>(null);
 const showChart = ref(false);
 
 const hasTracks = computed(() => !!review.value?.review.trackScores?.length);
+
+const showShareModal = ref(false);
+const sharePostType = ref<"review" | "quick_review" | "music_share">("review");
+const shareReview = computed(() => props.item.review);
+const shareQuickReview = computed(() => props.item.quickReview);
+const shareMusicShare = computed(() => props.item.musicShare);
+const shareLayoutRef = ref<InstanceType<typeof ShareImageLayout> | null>(null);
+const shareBackground = ref<'cartaz' | 'fita' | 'estudio'>('cartaz');
+const { state: shareState, setElement, generate, reset } = useShareImage(2);
+const shareBlob = computed(() => shareState.value.blob);
+
+async function openShareImage(type: "review" | "quick_review" | "music_share") {
+  sharePostType.value = type;
+  shareBackground.value = 'cartaz';
+  showShareModal.value = true;
+  reset();
+  await generateShareImage();
+}
+
+async function generateShareImage() {
+  reset();
+  await nextTick();
+  if (shareLayoutRef.value?.$el) {
+    setElement(shareLayoutRef.value.$el as HTMLElement);
+  }
+  await generate();
+}
+
+function onShareBackgroundChange(val: 'cartaz' | 'fita' | 'estudio') {
+  shareBackground.value = val;
+  generateShareImage();
+}
+
+function onShareModalClose() {
+  showShareModal.value = false;
+  reset();
+}
 
 function openMenu() {
   menuOpen.value = !menuOpen.value;
@@ -517,6 +557,13 @@ function onCardClick() {
           <MessageSquare class="w-3.5 h-3.5" />
           {{ review.commentCount }}
         </span>
+        <button
+          @click.stop="openShareImage('review')"
+          class="flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors ml-auto"
+          title="Compartilhar como imagem"
+        >
+          <Share2 class="w-3.5 h-3.5" />
+        </button>
       </div>
     </template>
 
@@ -619,6 +666,13 @@ function onCardClick() {
           <MessageSquare class="w-3.5 h-3.5" />
           {{ props.item.quickReview?.commentCount ?? 0 }}
         </span>
+        <button
+          @click.stop="openShareImage('quick_review')"
+          class="flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors ml-auto"
+          title="Compartilhar como imagem"
+        >
+          <Share2 class="w-3.5 h-3.5" />
+        </button>
       </div>
     </template>
 
@@ -727,7 +781,35 @@ function onCardClick() {
           <MessageSquare class="w-3.5 h-3.5" />
           {{ shareFull?.commentCount ?? 0 }}
         </span>
+        <button
+          @click.stop="openShareImage('music_share')"
+          class="flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors ml-auto"
+          title="Compartilhar como imagem"
+        >
+          <Share2 class="w-3.5 h-3.5" />
+        </button>
       </div>
     </template>
+
+    <!-- Hidden share image layout -->
+    <div style="position: fixed; left: -9999px; top: 0; width: 1080px; height: 1350px; pointer-events: none; z-index: -1;">
+      <ShareImageLayout
+        ref="shareLayoutRef"
+        :post-type="sharePostType"
+        :review="shareReview"
+        :quick-review="shareQuickReview"
+        :music-share="shareMusicShare"
+        :background="shareBackground"
+      />
+    </div>
+
+    <ShareImageModal
+      :show="showShareModal"
+      :state="shareState"
+      :blob="shareBlob"
+      :background="shareBackground"
+      @close="onShareModalClose"
+      @update:background="onShareBackgroundChange"
+    />
   </article>
 </template>

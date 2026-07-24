@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Loader2, AlertCircle, Heart, MessageSquare, ExternalLink } from 'lucide-vue-next'
+import { ArrowLeft, Loader2, AlertCircle, Heart, MessageSquare, ExternalLink, Share2 } from 'lucide-vue-next'
 import { getMusicShareById, likeMusicShare, unlikeMusicShare } from '../services/musicShareService'
 import type { FullMusicShareDTO } from '../types'
 import AppImage from '../components/AppImage.vue'
 import MusicShareComments from '../components/share/MusicShareComments.vue'
+import ShareImageLayout from '../components/ShareImageLayout.vue'
+import ShareImageModal from '../components/ShareImageModal.vue'
+import { useShareImage } from '../composables/useShareImage'
 
 const route = useRoute()
 const router = useRouter()
@@ -132,6 +135,41 @@ async function toggleLike() {
 
 function scrollToComments() {
     commentsSection.value?.scrollIntoView({ behavior: 'smooth' })
+}
+
+const showShareModal = ref(false)
+const shareLayoutRef = ref<InstanceType<typeof ShareImageLayout> | null>(null)
+const shareBackground = ref<'cartaz' | 'fita' | 'estudio'>('cartaz')
+const { state: shareState, setElement, generate, reset } = useShareImage(2)
+const shareBlob = computed(() => shareState.value.blob)
+const shareMusicShareData = computed(() => {
+  if (!fullShare.value) return null
+  return fullShare.value
+})
+
+async function openShareImage() {
+  shareBackground.value = 'cartaz'
+  showShareModal.value = true
+  await generateShareImage()
+}
+
+async function generateShareImage() {
+  reset()
+  await nextTick()
+  if (shareLayoutRef.value?.$el) {
+    setElement(shareLayoutRef.value.$el as HTMLElement)
+  }
+  await generate()
+}
+
+function onShareBackgroundChange(val: 'cartaz' | 'fita' | 'estudio') {
+  shareBackground.value = val
+  generateShareImage()
+}
+
+function onShareModalClose() {
+  showShareModal.value = false
+  reset()
 }
 
 function navigateToItem() {
@@ -276,6 +314,13 @@ function navigateToItem() {
                 <ExternalLink class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Spotify
             </a>
+            <button
+                @click="openShareImage"
+                class="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-2xl font-semibold text-sm sm:text-base bg-[var(--color-surface-2)] text-white hover:bg-[var(--color-surface)] border border-[var(--color-border)] transition-all"
+                title="Compartilhar como imagem"
+            >
+                <Share2 class="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
         </div>
 
         <!-- Comments Section -->
@@ -288,4 +333,25 @@ function navigateToItem() {
         </div>
     </div>
   </div>
+
+  <!-- Hidden share image layout -->
+  <div style="position: fixed; left: -9999px; top: 0; width: 1080px; height: 1350px; pointer-events: none; z-index: -1;">
+    <ShareImageLayout
+      ref="shareLayoutRef"
+      post-type="music_share"
+      :review="null"
+        :quick-review="null"
+        :music-share="shareMusicShareData"
+        :background="shareBackground"
+      />
+  </div>
+
+  <ShareImageModal
+    :show="showShareModal"
+    :state="shareState"
+    :blob="shareBlob"
+    :background="shareBackground"
+    @close="onShareModalClose"
+    @update:background="onShareBackgroundChange"
+  />
 </template>

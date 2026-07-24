@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Star, Loader2, AlertCircle, Heart, ExternalLink, MessageSquare } from 'lucide-vue-next'
+import { ArrowLeft, Star, Loader2, AlertCircle, Heart, ExternalLink, MessageSquare, Share2 } from 'lucide-vue-next'
 import { getReview, likeReview, unlikeReview } from '../services/reviewService'
 import { useSeoMeta } from '../composables/useSeoMeta'
 import { useJsonLd, buildReviewSchema } from '../composables/useJsonLd'
@@ -9,6 +9,9 @@ import type { FullReviewDTO } from '../types'
 import AppImage from '../components/AppImage.vue'
 import EmotionChart from '../components/review/EmotionChart.vue'
 import ReviewComments from '../components/review/ReviewComments.vue'
+import ShareImageLayout from '../components/ShareImageLayout.vue'
+import ShareImageModal from '../components/ShareImageModal.vue'
+import { useShareImage } from '../composables/useShareImage'
 
 const route = useRoute()
 const router = useRouter()
@@ -91,6 +94,46 @@ async function toggleLike() {
     } finally {
         liking.value = false
     }
+}
+
+const showShareModal = ref(false)
+const shareLayoutRef = ref<InstanceType<typeof ShareImageLayout> | null>(null)
+const shareBackground = ref<'cartaz' | 'fita' | 'estudio'>('cartaz')
+const { state: shareState, setElement, generate, reset } = useShareImage(2)
+const shareBlob = computed(() => shareState.value.blob)
+const shareReviewData = computed(() => {
+  if (!review.value) return null
+  return {
+    review: review.value.review,
+    likeCount: review.value.likeCount,
+    likedByCurrentUser: review.value.likedByCurrentUser,
+    commentCount: review.value.commentCount,
+  } as any
+})
+
+async function openShareImage() {
+  shareBackground.value = 'cartaz'
+  showShareModal.value = true
+  await generateShareImage()
+}
+
+async function generateShareImage() {
+  reset()
+  await nextTick()
+  if (shareLayoutRef.value?.$el) {
+    setElement(shareLayoutRef.value.$el as HTMLElement)
+  }
+  await generate()
+}
+
+function onShareBackgroundChange(val: 'cartaz' | 'fita' | 'estudio') {
+  shareBackground.value = val
+  generateShareImage()
+}
+
+function onShareModalClose() {
+  showShareModal.value = false
+  reset()
 }
 
 function scrollToComments() {
@@ -265,10 +308,17 @@ function scrollToComments() {
                 {{ localCommentCount }} comentários
             </button>
             
-            <a v-if="review.review.album.spotify_url" :href="review.review.album.spotify_url" target="_blank" class="ml-auto flex items-center gap-2 px-4 py-2.5 rounded-2xl font-semibold text-[#1DB954] bg-[#1DB954]/10 hover:bg-[#1DB954]/20 border border-[#1DB954]/20 transition-all">
+            <a v-if="review.review.album.spotify_url" :href="review.review.album.spotify_url" target="_blank" class="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-semibold text-[#1DB954] bg-[#1DB954]/10 hover:bg-[#1DB954]/20 border border-[#1DB954]/20 transition-all">
                 <ExternalLink class="w-4 h-4" />
                 Spotify
             </a>
+            <button
+                @click="openShareImage"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-semibold bg-[var(--color-surface-2)] text-white hover:bg-[var(--color-surface)] border border-[var(--color-border)] transition-all"
+                title="Compartilhar como imagem"
+            >
+                <Share2 class="w-4 h-4" />
+            </button>
         </div>
 
         <!-- Comments Section -->
@@ -281,4 +331,25 @@ function scrollToComments() {
         </div>
     </div>
   </div>
+
+  <!-- Hidden share image layout -->
+  <div style="position: fixed; left: -9999px; top: 0; width: 1080px; height: 1350px; pointer-events: none; z-index: -1;">
+    <ShareImageLayout
+      ref="shareLayoutRef"
+      post-type="review"
+      :review="shareReviewData"
+      :quick-review="null"
+      :music-share="null"
+      :background="shareBackground"
+    />
+  </div>
+
+  <ShareImageModal
+    :show="showShareModal"
+    :state="shareState"
+    :blob="shareBlob"
+    :background="shareBackground"
+    @close="onShareModalClose"
+    @update:background="onShareBackgroundChange"
+  />
 </template>
