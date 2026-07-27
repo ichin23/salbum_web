@@ -199,10 +199,10 @@ watch(
     <div class="flex items-center gap-2 flex-wrap">
       <button
         v-for="chip in [
-          { value: 'album', label: 'Álbuns', icon: Music },
           { value: 'artist', label: 'Artistas', icon: User },
           { value: 'music', label: 'Músicas', icon: Music2 },
           { value: 'user', label: 'Usuários', icon: UserCheck },
+          { value: 'album', label: 'Álbuns', icon: Music },
         ]"
         :key="chip.value"
         @click="selectType(chip.value as 'album' | 'artist' | 'music' | 'user')"
