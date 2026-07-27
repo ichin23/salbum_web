@@ -129,10 +129,10 @@ function starFill(index: number, s: number): string {
              font-family:'Inter',system-ui,-apple-system,sans-serif;
              background:linear-gradient(174deg, #212121 0%, #17275b 50%, #082b0f 100%);
              display:flex; flex-direction:column; align-items:center;
-             padding:200px 161px 132px;"
+             padding:160px 161px 80px;"
     >
       <!-- Frame: glass card + quote + user + extras -->
-      <div style="display:flex; flex-direction:column; align-items:center; gap:47px; width:757px;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:24px; width:757px; flex:1; min-height:0;">
 
         <!-- Glass card -->
         <div style="flex-shrink:0; width:709px; height:906px; box-sizing:border-box; border-radius:30px;
@@ -184,7 +184,7 @@ function starFill(index: number, s: number): string {
         </div>
 
         <!-- Quote text -->
-        <p v-if="contentText" style="font-size:36px; font-weight:400; color:#ffffff; line-height:1.45; text-align:center; margin:0; width:100%;">
+        <p v-if="contentText" style="font-size:36px; font-weight:400; color:#ffffff; line-height:1.45; text-align:center; margin:0; width:100%; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;">
           {{ contentText }}
         </p>
 
@@ -223,17 +223,18 @@ function starFill(index: number, s: number): string {
             </div>
           </div>
         </template>
+
+        <!-- Branding -->
+        <div style="margin-top:auto; flex-shrink:0; display:flex; align-items:center; gap:15px; white-space:nowrap;">
+          <img src="/salbum_logo.svg" alt="Salbum" style="width:52px; height:86px;"/>
+          <span style="font-size:48px; font-family:'Jersey 25',cursive,system-ui; color:#ffffff; line-height:1;">Salbum</span>
+          <span style="font-size:24px; font-family:'Inter',sans-serif; color:#ffffff;">salbum.com.br</span>
+        </div>
       </div>
 
       <!-- Floating quote mark (decorative, TestImage position) -->
       <div v-if="contentText" style="position:absolute; left:133px; top:1130px; font-size:96px; font-family:'Jersey 25',cursive,system-ui; color:#ffffff; line-height:1; pointer-events:none;">"</div>
 
-      <!-- Branding (Salbum logo + wordmark) -->
-      <div style="position:absolute; left:50%; bottom:132px; transform:translateX(-50%); display:flex; align-items:center; gap:15px; white-space:nowrap;">
-        <img src="/salbum_logo.svg" alt="Salbum" style="width:52px; height:86px;"/>
-        <span style="font-size:48px; font-family:'Jersey 25',cursive,system-ui; color:#ffffff; line-height:1;">Salbum</span>
-        <span style="font-size:24px; font-family:'Inter',sans-serif; color:#ffffff;">salbum.com.br</span>
-      </div>
     </div>
 
 
@@ -244,10 +245,10 @@ function starFill(index: number, s: number): string {
              font-family:'Inter',system-ui,-apple-system,sans-serif;
              background:linear-gradient(174deg, #06070b 0%, #0b0c12 50%, #06070b 100%);
              display:flex; flex-direction:column; align-items:center;
-             padding:200px 161px 132px;"
+             padding:160px 161px 80px;"
     >
       <!-- Frame: glass card + quote + user + extras -->
-      <div style="display:flex; flex-direction:column; align-items:center; gap:47px; width:757px;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:24px; width:757px; flex:1; min-height:0;">
 
         <!-- Glass card -->
         <div style="flex-shrink:0; width:709px; height:906px; box-sizing:border-box; border-radius:30px;
@@ -299,7 +300,7 @@ function starFill(index: number, s: number): string {
         </div>
 
         <!-- Quote text -->
-        <p v-if="contentText" style="font-size:36px; font-weight:300; color:rgba(255,255,255,0.6); line-height:1.55; font-style:italic; text-align:center; margin:0; width:100%;">
+        <p v-if="contentText" style="font-size:36px; font-weight:300; color:rgba(255,255,255,0.6); line-height:1.55; font-style:italic; text-align:center; margin:0; width:100%; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;">
           {{ contentText }}
         </p>
 
@@ -337,17 +338,18 @@ function starFill(index: number, s: number): string {
             </div>
           </div>
         </template>
+
+        <!-- Branding -->
+        <div style="margin-top:auto; flex-shrink:0; display:flex; align-items:center; gap:15px; white-space:nowrap;">
+          <img src="/salbum_logo.svg" alt="Salbum" style="width:52px; height:86px; opacity:0.18;"/>
+          <span style="font-size:48px; font-family:'Jersey 25',cursive,system-ui; color:rgba(255,255,255,0.18); line-height:1; letter-spacing:5px;">SALBUM</span>
+          <span style="font-size:24px; font-family:'Inter',sans-serif; color:rgba(255,255,255,0.18);">salbum.com.br</span>
+        </div>
       </div>
 
       <!-- Floating quote mark -->
       <div v-if="contentText" style="position:absolute; left:133px; top:1130px; font-size:96px; font-family:'Jersey 25',cursive,system-ui; color:rgba(255,255,255,0.12); line-height:1; pointer-events:none;">"</div>
 
-      <!-- Branding -->
-      <div style="position:absolute; left:50%; bottom:132px; transform:translateX(-50%); display:flex; align-items:center; gap:15px; white-space:nowrap;">
-        <img src="/salbum_logo.svg" alt="Salbum" style="width:52px; height:86px; opacity:0.18;"/>
-        <span style="font-size:48px; font-family:'Jersey 25',cursive,system-ui; color:rgba(255,255,255,0.18); line-height:1; letter-spacing:5px;">SALBUM</span>
-        <span style="font-size:24px; font-family:'Inter',sans-serif; color:rgba(255,255,255,0.18);">salbum.com.br</span>
-      </div>
     </div>
 
 
@@ -358,7 +360,7 @@ function starFill(index: number, s: number): string {
              font-family:'Inter',system-ui,-apple-system,sans-serif;
              background:linear-gradient(148deg, #100224 0%, #220950 20%, #0e1e56 46%, #0a1e3a 68%, #04100e 100%);
              display:flex; flex-direction:column; align-items:center;
-             padding:200px 161px 132px;"
+             padding:160px 161px 80px;"
     >
       <!-- Decorative blobs -->
       <div style="position:absolute;top:-280px;left:-220px;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.18) 0%,transparent 65%);pointer-events:none;z-index:0;"/>
@@ -367,7 +369,7 @@ function starFill(index: number, s: number): string {
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(139,92,246,0.5),rgba(56,130,246,0.4),transparent);pointer-events:none;z-index:0;"/>
 
       <!-- Frame -->
-      <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:47px; width:757px;">
+      <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:24px; width:757px; flex:1; min-height:0;">
 
         <!-- Glass card -->
         <div style="flex-shrink:0; width:709px; height:906px; box-sizing:border-box; border-radius:30px;
@@ -420,7 +422,7 @@ function starFill(index: number, s: number): string {
         </div>
 
         <!-- Quote text -->
-        <p v-if="contentText" style="font-size:36px; font-weight:400; color:rgba(255,255,255,0.8); line-height:1.55; text-align:center; margin:0; width:100%;">
+        <p v-if="contentText" style="font-size:36px; font-weight:400; color:rgba(255,255,255,0.8); line-height:1.55; text-align:center; margin:0; width:100%; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;">
           {{ contentText }}
         </p>
 
@@ -459,17 +461,18 @@ function starFill(index: number, s: number): string {
             </div>
           </div>
         </template>
+
+        <!-- Branding -->
+        <div style="margin-top:auto; flex-shrink:0; display:flex; align-items:center; gap:15px; white-space:nowrap;">
+          <img src="/salbum_logo.svg" alt="Salbum" style="width:52px; height:86px; filter:drop-shadow(0 0 8px rgba(139,92,246,0.5));"/>
+          <span style="font-size:48px; font-family:'Jersey 25',cursive,system-ui; color:rgba(255,255,255,0.62); line-height:1; text-shadow:0 0 20px rgba(139,92,246,0.3);">Salbum</span>
+          <span style="font-size:24px; font-family:'Inter',sans-serif; color:rgba(255,255,255,0.24);">salbum.com.br</span>
+        </div>
       </div>
 
       <!-- Floating quote mark -->
       <div v-if="contentText" style="position:absolute; left:133px; top:1130px; font-size:96px; font-family:'Jersey 25',cursive,system-ui; color:rgba(139,92,246,0.55); line-height:1; pointer-events:none;">"</div>
 
-      <!-- Branding -->
-      <div style="position:absolute; left:50%; bottom:132px; transform:translateX(-50%); display:flex; align-items:center; gap:15px; white-space:nowrap;">
-        <img src="/salbum_logo.svg" alt="Salbum" style="width:52px; height:86px; filter:drop-shadow(0 0 8px rgba(139,92,246,0.5));"/>
-        <span style="font-size:48px; font-family:'Jersey 25',cursive,system-ui; color:rgba(255,255,255,0.62); line-height:1; text-shadow:0 0 20px rgba(139,92,246,0.3);">Salbum</span>
-        <span style="font-size:24px; font-family:'Inter',sans-serif; color:rgba(255,255,255,0.24);">salbum.com.br</span>
-      </div>
     </div>
 
   </div>
