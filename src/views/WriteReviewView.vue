@@ -8,6 +8,7 @@ import {
   updateReview,
   getFeelings,
 } from "../services/reviewService";
+import { trackEvent } from "../services/firebase/analytics";
 import type {
   FetchAlbumDetails,
   ReviewDTO,
@@ -137,11 +138,14 @@ async function handleSubmit() {
   submitError.value = null;
 
   try {
-    if (isEditing.value && existingReview.value) {
-      // Editing: only content update is supported by PUT /reviews/{id}
-      await updateReview(existingReview.value.id, content.value);
+    const isNew = !(isEditing.value && existingReview.value)
+    trackEvent('review_submitted', {
+      album_id: album.value.id,
+      is_update: isNew ? 0 : 1,
+    })
+    if (!isNew) {
+      await updateReview(existingReview.value!.id, content.value);
     } else {
-      // Creating new
       const payload = buildPayload();
       await createReview(payload);
     }

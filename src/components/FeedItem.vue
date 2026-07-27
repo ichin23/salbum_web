@@ -33,6 +33,7 @@ import {
 } from "../services/quickReviewService";
 import ShareImageModal from "./ShareImageModal.vue";
 import ShareImageLayout from "./ShareImageLayout.vue";
+import ShareMenu from "./share/ShareMenu.vue";
 import { useShareImage } from "../composables/useShareImage";
 
 const props = defineProps<{ item: ActivityItemDTO }>();
@@ -133,6 +134,8 @@ const showChart = ref(false);
 const hasTracks = computed(() => !!review.value?.review.trackScores?.length);
 
 const showShareModal = ref(false);
+const showShareMenu = ref(false);
+const shareMenuPostType = ref<"review" | "quick_review" | "music_share">("review");
 const sharePostType = ref<"review" | "quick_review" | "music_share">("review");
 const shareReview = computed(() => props.item.review);
 const shareQuickReview = computed(() => props.item.quickReview);
@@ -148,6 +151,29 @@ async function openShareImage(type: "review" | "quick_review" | "music_share") {
   showShareModal.value = true;
   reset();
   await generateShareImage();
+}
+
+const shareMenuUrl = computed(() => {
+  const origin = window.location.origin;
+  if (isReview.value && review.value) {
+    return `${origin}/review/${review.value.review.id}`;
+  }
+  if (isShare.value && share.value) {
+    return `${origin}/share/${share.value.id}`;
+  }
+  if (isQuickReview.value && quickReview.value) {
+    return `${origin}/quick-review/${quickReview.value.id}`;
+  }
+  return window.location.href;
+});
+
+function openShareMenu(type: "review" | "quick_review" | "music_share") {
+  shareMenuPostType.value = type;
+  showShareMenu.value = true;
+}
+
+async function onShareMenuOpenImage() {
+  await openShareImage(shareMenuPostType.value);
 }
 
 async function generateShareImage() {
@@ -541,7 +567,7 @@ function onCardClick() {
 
       <div
         v-if="!editing"
-        class="flex items-center justify-between pt-1 border-t border-[var(--color-border)] mt-2"
+        class="flex items-center gap-4 pt-1 border-t border-[var(--color-border)] mt-2"
       >
         <button
           @click.stop="toggleLike"
@@ -558,9 +584,9 @@ function onCardClick() {
           {{ review.commentCount }}
         </span>
         <button
-          @click.stop="openShareImage('review')"
+          @click.stop="openShareMenu('review')"
           class="flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors ml-auto"
-          title="Compartilhar como imagem"
+          title="Compartilhar"
         >
           <Share2 class="w-3.5 h-3.5" />
         </button>
@@ -649,7 +675,7 @@ function onCardClick() {
 
       <div
         v-if="!editing"
-        class="flex items-center justify-between pt-1 border-t border-[var(--color-border)] mt-2"
+        class="flex items-center gap-4 pt-1 border-t border-[var(--color-border)] mt-2"
         @click.stop
       >
         <button
@@ -667,9 +693,9 @@ function onCardClick() {
           {{ props.item.quickReview?.commentCount ?? 0 }}
         </span>
         <button
-          @click.stop="openShareImage('quick_review')"
+          @click.stop="openShareMenu('quick_review')"
           class="flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors ml-auto"
-          title="Compartilhar como imagem"
+          title="Compartilhar"
         >
           <Share2 class="w-3.5 h-3.5" />
         </button>
@@ -764,7 +790,7 @@ function onCardClick() {
 
       <div
         v-if="!editing"
-        class="flex items-center justify-between pt-1 border-t border-[var(--color-border)] mt-2"
+        class="flex items-center gap-4 pt-1 border-t border-[var(--color-border)] mt-2"
         @click.stop
       >
         <button
@@ -782,9 +808,9 @@ function onCardClick() {
           {{ shareFull?.commentCount ?? 0 }}
         </span>
         <button
-          @click.stop="openShareImage('music_share')"
+          @click.stop="openShareMenu('music_share')"
           class="flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors ml-auto"
-          title="Compartilhar como imagem"
+          title="Compartilhar"
         >
           <Share2 class="w-3.5 h-3.5" />
         </button>
@@ -802,6 +828,13 @@ function onCardClick() {
         :background="shareBackground"
       />
     </div>
+
+    <ShareMenu
+      :show="showShareMenu"
+      :url="shareMenuUrl"
+      @close="showShareMenu = false"
+      @open-image="onShareMenuOpenImage"
+    />
 
     <ShareImageModal
       :show="showShareModal"

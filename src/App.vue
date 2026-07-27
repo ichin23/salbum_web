@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import TestImage from './components/TestImage.vue';
 import { useWebsocketStore } from './stores/websocket'
+import { useAnalytics, useGlobalErrorHandler } from './composables/useAnalytics'
+import CookieConsentBanner from './components/CookieConsentBanner.vue'
 
-// Initialize websocket store which will automatically connect/disconnect based on auth state
 useWebsocketStore()
+useAnalytics()
+useGlobalErrorHandler()
 </script>
 
 <template>
-  <TestImage />
+  <RouterView />
+  <CookieConsentBanner />
 </template>

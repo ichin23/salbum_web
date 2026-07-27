@@ -11,6 +11,7 @@ import EmotionChart from '../components/review/EmotionChart.vue'
 import ReviewComments from '../components/review/ReviewComments.vue'
 import ShareImageLayout from '../components/ShareImageLayout.vue'
 import ShareImageModal from '../components/ShareImageModal.vue'
+import ShareMenu from '../components/share/ShareMenu.vue'
 import { useShareImage } from '../composables/useShareImage'
 
 const route = useRoute()
@@ -97,6 +98,7 @@ async function toggleLike() {
 }
 
 const showShareModal = ref(false)
+const showShareMenu = ref(false)
 const shareLayoutRef = ref<InstanceType<typeof ShareImageLayout> | null>(null)
 const shareBackground = ref<'cartaz' | 'fita' | 'estudio'>('cartaz')
 const { state: shareState, setElement, generate, reset } = useShareImage(2)
@@ -110,6 +112,10 @@ const shareReviewData = computed(() => {
     commentCount: review.value.commentCount,
   } as any
 })
+
+function openShareMenu() {
+  showShareMenu.value = true
+}
 
 async function openShareImage() {
   shareBackground.value = 'cartaz'
@@ -313,9 +319,9 @@ function scrollToComments() {
                 Spotify
             </a>
             <button
-                @click="openShareImage"
+                @click="openShareMenu"
                 class="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-semibold bg-[var(--color-surface-2)] text-white hover:bg-[var(--color-surface)] border border-[var(--color-border)] transition-all"
-                title="Compartilhar como imagem"
+                title="Compartilhar"
             >
                 <Share2 class="w-4 h-4" />
             </button>
@@ -343,6 +349,12 @@ function scrollToComments() {
       :background="shareBackground"
     />
   </div>
+
+  <ShareMenu
+    :show="showShareMenu"
+    @close="showShareMenu = false"
+    @open-image="openShareImage"
+  />
 
   <ShareImageModal
     :show="showShareModal"

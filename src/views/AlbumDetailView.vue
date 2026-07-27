@@ -38,6 +38,7 @@ import type { QuickReviewFormTarget } from "../components/review/QuickReviewForm
 import type { ShareTarget } from "../components/share/MusicShareModal.vue";
 import { useListenList, fetchListenList } from "../composables/useListenList";
 import { useAuthStore } from "../stores/auth";
+import { trackEvent } from "../services/firebase/analytics";
 
 const route = useRoute();
 const router = useRouter();
@@ -68,6 +69,11 @@ onMounted(async () => {
     ]);
     album.value = data.album;
     userReview.value = data.userReview;
+
+    trackEvent('album_view', {
+      album_id: album.value.id,
+      album_title: album.value.name,
+    })
 
     // SEO meta after data loads
     if (album.value) {
@@ -154,6 +160,7 @@ const shareTarget = ref<ShareTarget | null>(null);
 
 function shareAlbum() {
   if (!album.value) return;
+  trackEvent('share', { content_type: 'album', content_id: album.value.id })
   shareTarget.value = {
     type: "album",
     id: album.value.id,
@@ -165,6 +172,7 @@ function shareAlbum() {
 
 function shareTrack(music: FetchAlbumDetails["musics"][number]) {
   if (!album.value) return;
+  trackEvent('share', { content_type: 'track', content_id: music.id })
   shareTarget.value = {
     type: "music",
     id: music.id,

@@ -13,6 +13,7 @@ import {
 } from "lucide-vue-next";
 import { fetchSearch } from "../services/fetchService";
 import { searchUsers } from "../services/userService";
+import { trackEvent } from "../services/firebase/analytics";
 import type { FetchAlbum, FetchArtist, FetchMusicResult } from "../types";
 import type { UserDTO } from "../services/userService";
 import AppImage from "../components/AppImage.vue";
@@ -58,6 +59,7 @@ const totalResults = computed(() => {
 });
 
 async function doSearch(q: string) {
+  trackEvent('search', { query: q.trim() })
   if (!q.trim()) {
     albumResults.value = [];
     artistResults.value = [];

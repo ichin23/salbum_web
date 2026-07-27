@@ -13,11 +13,13 @@ import {
   BookmarkPlus,
   BookmarkCheck,
   Pencil,
+  RefreshCw,
 } from "lucide-vue-next";
 import { fetchArtistDetails, syncArtist } from "../services/fetchService";
 import { useSeoMeta } from "../composables/useSeoMeta";
 import { useJsonLd, buildPersonSchema } from "../composables/useJsonLd";
 import type { FetchArtistDetails, FetchAlbum } from "../types";
+import { trackEvent } from "../services/firebase/analytics";
 import MusicShareModal from "../components/share/MusicShareModal.vue";
 import type { ShareTarget } from "../components/share/MusicShareModal.vue";
 import { useListenList, fetchListenList } from "../composables/useListenList";
@@ -137,6 +139,7 @@ const shareTarget = ref<ShareTarget | null>(null);
 
 function shareArtist() {
   if (!artist.value) return;
+  trackEvent('share', { content_type: 'artist', content_id: artist.value.id })
   shareTarget.value = {
     type: "artist",
     id: artist.value.id,
@@ -316,6 +319,14 @@ async function handleSyncArtist() {
               >
                 <Share2 class="w-3.5 h-3.5" />
                 Compartilhar
+              </button>
+              <button
+                @click="handleSyncArtist"
+                :disabled="isSyncing"
+                class="inline-flex items-center gap-1.5 text-sm text-muted bg-[var(--color-surface-2)] border border-[var(--color-border)] hover:text-white hover:border-[var(--color-muted)]/50 rounded-full px-3 py-1 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw :class="isSyncing ? 'w-3.5 h-3.5 animate-spin' : 'w-3.5 h-3.5'" />
+                Sincronizar
               </button>
               <RouterLink
                 :to="{ name: 'edit-artist', params: { id: artist.id } }"

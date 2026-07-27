@@ -20,6 +20,7 @@ import QuickReviewComments from '../components/review/QuickReviewComments.vue'
 import QuickReviewForm from '../components/review/QuickReviewForm.vue'
 import ShareImageLayout from '../components/ShareImageLayout.vue'
 import ShareImageModal from '../components/ShareImageModal.vue'
+import ShareMenu from '../components/share/ShareMenu.vue'
 import { useShareImage } from '../composables/useShareImage'
 import type { QuickReviewFormTarget } from '../components/review/QuickReviewForm.vue'
 import { useAuthStore } from '../stores/auth'
@@ -132,6 +133,7 @@ function toggleMenu() {
 }
 
 const showShareModal = ref(false)
+const showShareMenu = ref(false)
 const shareLayoutRef = ref<InstanceType<typeof ShareImageLayout> | null>(null)
 const shareBackground = ref<'cartaz' | 'fita' | 'estudio'>('cartaz')
 const { state: shareState, setElement, generate, reset } = useShareImage(2)
@@ -140,6 +142,10 @@ const shareQuickReviewData = computed(() => {
   if (!item.value) return null
   return item.value
 })
+
+function openShareMenu() {
+  showShareMenu.value = true
+}
 
 async function openShareImage() {
   shareBackground.value = 'cartaz'
@@ -316,9 +322,9 @@ function onShareModalClose() {
             {{ item!.commentCount }}
           </button>
           <button
-            @click="openShareImage"
+            @click="openShareMenu"
             class="flex items-center gap-1.5 text-sm text-muted hover:text-primary transition-colors ml-auto"
-            title="Compartilhar como imagem"
+            title="Compartilhar"
           >
             <Share2 class="w-4 h-4" />
           </button>
@@ -336,6 +342,12 @@ function onShareModalClose() {
         :background="shareBackground"
       />
     </div>
+
+    <ShareMenu
+      :show="showShareMenu"
+      @close="showShareMenu = false"
+      @open-image="openShareImage"
+    />
 
     <ShareImageModal
       :show="showShareModal"

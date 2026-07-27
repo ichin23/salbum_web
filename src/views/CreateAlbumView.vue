@@ -10,12 +10,45 @@ import {
   Plus,
   Trash2,
   UserPlus,
+  Disc3,
 } from "lucide-vue-next";
 import { createAlbum, type CreateMusicDTO } from "../services/albumService";
 import { searchArtists } from "../services/artistService";
-import type { ArtistInfoDTO } from "../types";
+import { fetchSearch } from "../services/fetchService";
+import type { ArtistInfoDTO, FetchAlbum } from "../types";
 
 const router = useRouter();
+
+// ─── Pre-check (antes de criar, busca no MusicBrainz) ──────────────────────
+const preCheckArtist = ref("")
+const preCheckAlbum = ref("")
+const preCheckResults = ref<FetchAlbum[]>([])
+const preCheckLoading = ref(false)
+const preCheckSkipped = ref(false)
+
+async function doPreCheck() {
+  const q = `${preCheckArtist.value.trim()} ${preCheckAlbum.value.trim()}`.trim()
+  if (!q) return
+  preCheckLoading.value = true
+  preCheckResults.value = []
+  try {
+    const res = await fetchSearch({ q, type: 'album', force: true })
+    preCheckResults.value = res.type === 'album' ? (res.data as FetchAlbum[]) : []
+  } catch {
+    preCheckResults.value = []
+  } finally {
+    preCheckLoading.value = false
+  }
+}
+
+function skipPreCheck() {
+  preCheckSkipped.value = true
+  preCheckResults.value = []
+}
+
+function goToAlbum(id: string) {
+  router.push({ name: 'album-detail', params: { id } })
+}
 
 // ─── Album fields ──────────────────────────────────────────────────────────
 const name = ref("");
@@ -264,7 +297,95 @@ async function submit() {
       </div>
     </div>
 
-    <form @submit.prevent="submit" class="space-y-6">
+    <!-- ── Pre-check: busca forçada no MusicBrainz ─────────────────────────── -->
+    <div v-if="!preCheckSkipped" class="card p-5 space-y-4">
+      <h2 class="text-sm font-semibold text-white">Verificar se o álbum já existe</h2>
+      <p class="text-xs text-muted">
+        Antes de criar, vamos buscar no MusicBrainz para evitar duplicatas.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="space-y-1.5">
+          <label class="text-xs font-semibold text-muted uppercase tracking-wider">Artista</label>
+          <input
+            v-model="preCheckArtist"
+            type="text"
+            placeholder="Nome do artista"
+            class="w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] text-white placeholder-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors"
+          />
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-semibold text-muted uppercase tracking-wider">Álbum</label>
+          <input
+            v-model="preCheckAlbum"
+            type="text"
+            placeholder="Nome do álbum"
+            class="w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] text-white placeholder-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          @click="doPreCheck"
+          :disabled="preCheckLoading || !preCheckArtist.trim() || !preCheckAlbum.trim()"
+          class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          <Loader2 v-if="preCheckLoading" class="w-4 h-4 animate-spin" />
+          <Search v-else class="w-4 h-4" />
+          {{ preCheckLoading ? 'Buscando...' : 'Verificar' }}
+        </button>
+        <button
+          type="button"
+          @click="skipPreCheck"
+          class="text-xs text-muted hover:text-white transition-colors"
+        >
+          Pular verificação
+        </button>
+      </div>
+
+      <!-- Resultados da busca -->
+      <div v-if="preCheckResults.length > 0" class="space-y-2 pt-2">
+        <p class="text-xs font-semibold text-secondary">
+          {{ preCheckResults.length }} álbum(ns) encontrado(s) no MusicBrainz:
+        </p>
+        <div
+          v-for="album in preCheckResults"
+          :key="album.id"
+          class="flex items-center gap-3 px-3 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] cursor-pointer hover:bg-primary/10 hover:border-primary/30 transition-colors"
+          @click="goToAlbum(album.id)"
+        >
+          <img
+            v-if="album.image_url"
+            :src="album.image_url"
+            class="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+          />
+          <div v-else class="w-10 h-10 rounded-lg bg-[var(--color-surface)] flex-shrink-0 flex items-center justify-center">
+            <Disc3 class="w-5 h-5 text-muted" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-white truncate">{{ album.name }}</p>
+            <p class="text-xs text-muted truncate">
+              {{ album.artists?.map(a => a.name).join(', ') }}
+              <template v-if="album.release_date"> · {{ new Date(album.release_date).getFullYear() }}</template>
+            </p>
+          </div>
+          <span class="text-xs text-primary flex-shrink-0">Abrir</span>
+        </div>
+        <p class="text-xs text-muted pt-1">
+          O álbum já existe no catálogo. Clique em um resultado para abri-lo.
+        </p>
+      </div>
+
+      <div v-else-if="preCheckResults.length === 0 && !preCheckLoading && (preCheckArtist.trim() && preCheckAlbum.trim())" class="pt-1">
+        <p class="text-xs text-muted">
+          Nenhum resultado encontrado no MusicBrainz. Pode prosseguir com a criação manual.
+        </p>
+      </div>
+    </div>
+
+    <form v-if="preCheckSkipped" @submit.prevent="submit" class="space-y-6">
       <!-- ── Informações básicas ──────────────────────────────────────────── -->
       <section class="card p-5 space-y-4">
         <h2 class="text-sm font-semibold text-white">Informações básicas</h2>

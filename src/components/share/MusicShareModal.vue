@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { X, Share2, CheckCircle, AlertCircle } from "lucide-vue-next";
 import { createMusicShare } from "../../services/musicShareService";
+import { trackEvent } from "../../services/firebase/analytics";
 import AppImage from "../AppImage.vue";
 
 export type ShareTarget =
@@ -44,6 +45,10 @@ const success = ref(false);
 async function submit() {
   error.value = null;
   loading.value = true;
+  trackEvent('share', {
+    content_type: props.target.type,
+    content_id: props.target.id,
+  })
   try {
     await createMusicShare(props.target.type, props.target.id, comment.value);
     success.value = true;
