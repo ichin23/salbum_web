@@ -9,6 +9,8 @@ import MusicShareModal from '../components/share/MusicShareModal.vue'
 import type { QuickPostTarget } from '../components/QuickPostModal.vue'
 import type { QuickReviewFormTarget } from '../components/review/QuickReviewForm.vue'
 import type { ShareTarget } from '../components/share/MusicShareModal.vue'
+import type { FetchMusic } from '../types'
+import { fetchReleaseDetails } from '../services/fetchService'
 import { useNetwork } from '../composables/useNetwork'
 
 const { isOnline } = useNetwork()
@@ -27,14 +29,30 @@ function openQuickPost() {
     showQuickPost.value = true
 }
 
-function handleQuickReview(target: QuickPostTarget) {
+async function handleQuickReview(target: QuickPostTarget) {
+    const tracks: Pick<FetchMusic, 'id' | 'name' | 'position'>[] = []
+    try {
+        const res = await fetchReleaseDetails(target.albumId)
+        const album = res.album
+        if (album.discs && Object.keys(album.discs).length > 0) {
+            const keys = Object.keys(album.discs).sort((a, b) => Number(a) - Number(b))
+            for (const key of keys) {
+                const discTracks = album.discs[key]
+                if (discTracks) tracks.push(...discTracks)
+            }
+        } else if (album.musics?.length) {
+            tracks.push(...album.musics)
+        }
+    } catch {
+        // proceed with empty tracks as fallback
+    }
     quickReviewTarget.value = {
         targetType: target.type === 'music' ? 'MUSIC' : 'ALBUM',
         albumId: Number(target.albumId),
         albumTitle: target.albumTitle,
         albumCover: target.coverUrl,
         artistNames: target.artistNames,
-        tracks: [],
+        tracks,
     }
     if (target.type === 'music') {
         quickReviewTarget.value.musicId = Number(target.id)
