@@ -72,17 +72,15 @@ class Config:
     delete_original: bool
     cleanup: bool
     db_url: Optional[str]
-    image_query: str
+    image_query: Optional[str]
     url_prefix: str
 
 
-DEFAULT_IMAGE_QUERY = """
-SELECT image_url FROM albums WHERE image_url IS NOT NULL
-UNION
-SELECT image_url FROM artists WHERE image_url IS NOT NULL
-UNION
-SELECT image_url FROM users WHERE image_url IS NOT NULL
-"""
+COLUMN_NAME_PATTERNS = [
+    "image_url", "photo_url", "picture_url",
+    "avatar_url", "cover_url", "profile_image",
+    "background_image", "thumbnail_url", "banner_url",
+]
 
 
 def parse_args() -> Config:
@@ -116,7 +114,7 @@ Examples:
     # ── Cleanup ──
     p.add_argument("--cleanup", action="store_true", help="Delete orphaned images not referenced in the database")
     p.add_argument("--db-url", default=os.environ.get("DATABASE_URL"), help="PostgreSQL connection string")
-    p.add_argument("--image-query", default=DEFAULT_IMAGE_QUERY, help="SQL query returning all image URLs/paths from the DB")
+    p.add_argument("--image-query", help="Override auto-discovered query. SQL returning all image URLs/paths from the DB")
     p.add_argument("--url-prefix", default="", help="URL prefix to strip from DB paths to get the OCI object key (e.g. https://bucket.objectstorage.region.oraclecloud.com/)")
 
     # ── General ──
@@ -221,6 +219,47 @@ def list_images(client: oci.object_storage.ObjectStorageClient, namespace: str, 
 
 # ─── Database Helpers ─────────────────────────────────────────────────────────
 
+def discover_image_columns(conn) -> list[tuple[str, str]]:
+    """Auto-discover tables and columns likely to hold image URLs.
+
+    Returns list of (schema.table, column_name).
+    """
+    pattern_sql = " OR ".join(
+        f"c.column_name ILIKE '{p}'" for p in COLUMN_NAME_PATTERNS
+    )
+    sql = f"""
+        SELECT table_schema, table_name, column_name
+        FROM information_schema.columns c
+        WHERE ({pattern_sql})
+          AND c.data_type IN ('text', 'character varying', 'varchar')
+          AND c.table_schema NOT IN ('information_schema', 'pg_catalog')
+        ORDER BY c.table_schema, c.table_name, c.ordinal_position
+    """
+    with conn.cursor() as cur:
+        cur.execute(sql)
+        rows = cur.fetchall()
+
+    if not rows:
+        print("  No image columns auto-discovered. Use --image-query to specify manually.")
+        return []
+
+    print(f"  Discovered {len(rows)} image column(s):")
+    for sch, tbl, col in rows:
+        t = f"{sch}.{tbl}" if sch != "public" else tbl
+        print(f"    - {t}.{col}")
+
+    return [(r[0], r[1], r[2]) for r in rows]
+
+
+def build_auto_query(columns: list[tuple[str, str, str]]) -> str:
+    """Build a UNION query from discovered (schema, table, column) tuples."""
+    parts = []
+    for sch, tbl, col in columns:
+        full_table = f"{sch}.{tbl}" if sch != "public" else tbl
+        parts.append(f"SELECT {col} FROM {full_table} WHERE {col} IS NOT NULL AND {col} != ''")
+    return " UNION ".join(parts)
+
+
 def fetch_db_image_keys(cfg: Config) -> Set[str]:
     """Return the set of OCI object keys that are referenced in the database."""
     print(f"Connecting to database ...")
@@ -232,8 +271,17 @@ def fetch_db_image_keys(cfg: Config) -> Set[str]:
 
     keys: Set[str] = set()
     try:
+        if cfg.image_query:
+            sql = cfg.image_query
+            print(f"  Using manual --image-query")
+        else:
+            cols = discover_image_columns(conn)
+            if not cols:
+                return keys
+            sql = build_auto_query(cols)
+
         with conn.cursor() as cur:
-            cur.execute(cfg.image_query)
+            cur.execute(sql)
             for row in cur.fetchall():
                 raw = row[0]
                 if not raw:
