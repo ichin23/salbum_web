@@ -54,10 +54,11 @@ export const useWebsocketStore = defineStore('websocket', () => {
         }
     }
 
-    // Observa o estado de autenticação para conectar ou desconectar automaticamente
+    // Observa o estado de autenticação para conectar, buscar notificações ou desconectar
     watch(() => authStore.isAuthenticated, (isAuth) => {
         if (isAuth) {
             connect()
+            notificationsStore.fetchNotifications()
         } else {
             disconnect()
         }
